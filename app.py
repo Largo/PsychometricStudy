@@ -6,7 +6,8 @@ import vlc
 from vlc import EventType
 import time
 from time import gmtime, strftime
-import winsound
+if sys.platform == "win32":
+	import winsound
 
 import xlsxwriter
 
@@ -30,6 +31,7 @@ class Window (QtWidgets.QMainWindow):
 	record_zeros = False
 	
 	eta = 0 ## elapsed time for counter 
+
 	
 	def __init__(self):
 	
@@ -166,13 +168,16 @@ class Window (QtWidgets.QMainWindow):
 		self.widget.setLayout(self.vboxlayout)
 		
 		self.createMenu()
+
+		self.prevSecond =0
+		self.prevMin	=0
 		
 	def updateCounter (self):
 		self.counterLabel.setText(str(self.points))
 	
 	def beep (self):
-		#winsound.Beep (1000, 200)
-		winsound.Beep (500, 50)
+		if sys.platform == "win32":
+			winsound.Beep (500, 50)
 		
 	def sliderChanged (self, val):
 		print("val changed")
@@ -402,13 +407,12 @@ class Window (QtWidgets.QMainWindow):
 
 	def playClicked (self, event):
 		if self.mediaplayer != None:
+			self.resetMetrics()
 			self.showSplash(False)
 			self.mediaplayer.play()
 			
 			self.playButton.hide()
 			self.pauseButton.show()
-			
-			self.resetMetrics()
 			
 			self.backButton.setEnabled (True)
 			self.nextButton.setEnabled (True)
@@ -453,7 +457,12 @@ class Window (QtWidgets.QMainWindow):
 			self.media = self.instance.media_new(str(path))
 			self.mediaplayer.set_media(self.media)
 			self.media.parse()
-			self.mediaplayer.set_hwnd(self.videoframe.winId())
+			if sys.platform.startswith('linux'): # for Linux using the X Server
+				self.mediaplayer.set_xwindow(self.videoframe.winId())
+			elif sys.platform == "win32": # for Windows
+				self.mediaplayer.set_hwnd(self.videoframe.winId())
+			elif sys.platform == "darwin": # for MacOS
+				self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
 			
 			self.setListners()
 			self.playButton.setEnabled (True)
