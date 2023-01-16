@@ -1,13 +1,17 @@
 import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QLabel
+from PyQt5.QtGui import QFontDatabase, QFont
 import vlc
 from vlc import EventType
 import time
 from time import gmtime, strftime
 if sys.platform == "win32":
 	import winsound
+
+import qtawesome as qta #https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
 
 import xlsxwriter
 
@@ -37,11 +41,13 @@ class Window (QtWidgets.QMainWindow):
 	
 		super(Window, self).__init__()
 		#self.setWindowFlags(QtCore.Qt.WindowTitleHint)
+		#self.setWindowFlags(Qt.WindowTitleHint | Qt.WindowStaysOnTopHint)
 		self.setWindowIcon (QtGui.QIcon('icon.png'))
 		self.setWindowTitle(app_name)
 		self.setMinimumSize(750, 600)
+		self.resize(1200, 1000)
 		#self.setFixedSize(750, 600)
-			
+
 		self.instance = vlc.Instance()
 		self.mediaplayer = self.instance.media_player_new()
 		
@@ -68,32 +74,41 @@ class Window (QtWidgets.QMainWindow):
 		self.videoframe.hide()
 		
 		self.hboxlayout = QtWidgets.QHBoxLayout()
+		#self.hboxlayout.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 		self.playButton = QtWidgets.QPushButton('')
-		self.playButton.setIcon(self.playButton.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
+		self.playButton.setIcon(qta.icon("fa5s.play"))
+		
+		# self.playButton.setIconSize(QtCore.QSize(60,60))
 		self.playButton.setEnabled(False)
+		
 		self.playButton.clicked.connect(self.playClicked)
+		self.playButton.setIconSize(QtCore.QSize(50, 50))
+		# self.playButton.setMinimumSize(QtCore.QSize(100, 100))
+		# self.playButton.setMaximumSize(QtCore.QSize(100, 100))
+		#self.playButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 		self.hboxlayout.addWidget (self.playButton)
+
 
 		self.pauseButton = QtWidgets.QPushButton('')
 		self.pauseButton.hide()
-		self.pauseButton.setIcon(self.pauseButton.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
+		self.pauseButton.setIcon(qta.icon("fa5s.pause"))
 		self.pauseButton.clicked.connect(self.pauseButtonClicked)
 		self.hboxlayout.addWidget (self.pauseButton)
 
 		self.backButton = QtWidgets.QPushButton('')
-		self.backButton.setIcon(self.backButton.style().standardIcon(QtWidgets.QStyle.SP_MediaSeekBackward))
+		self.backButton.setIcon(qta.icon("fa5s.backward"))
 		self.backButton.setEnabled (False)
 		self.backButton.clicked.connect(self.backButtonClicked)
 		self.hboxlayout.addWidget (self.backButton)
 
 		self.stopButton = QtWidgets.QPushButton('')
-		self.stopButton.setIcon(self.stopButton.style().standardIcon(QtWidgets.QStyle.SP_MediaStop))
+		self.stopButton.setIcon(qta.icon("fa5s.stop"))
 		self.stopButton.setEnabled (False)
 		self.stopButton.clicked.connect(self.stopClicked)
 		self.hboxlayout.addWidget (self.stopButton)
 
 		self.nextButton = QtWidgets.QPushButton ('')
-		self.nextButton.setIcon(self.nextButton.style().standardIcon(QtWidgets.QStyle.SP_MediaSeekForward))
+		self.nextButton.setIcon(qta.icon("fa5s.forward"))
 		self.nextButton.setEnabled (False)
 		self.nextButton.clicked.connect (self.nextButtonClicked)
 		self.hboxlayout.addWidget (self.nextButton)
@@ -101,7 +116,8 @@ class Window (QtWidgets.QMainWindow):
 		self.hboxlayout.addStretch (1)
 		self.incButton = QtWidgets.QPushButton('')
 		self.incButton.setMinimumWidth(100)
-		self.incButton.setIcon(self.incButton.style().standardIcon(QtWidgets.QStyle.SP_ArrowUp))
+		self.incButton.setIcon(qta.icon("fa5s.arrow-circle-up"))
+		
 		self.incButton.setEnabled (False)
 		#self.incButton.clicked.connect(self.increase)
 		self.incButton.pressed.connect(self.increase)
@@ -114,7 +130,8 @@ class Window (QtWidgets.QMainWindow):
 
 		self.decButton = QtWidgets.QPushButton('')
 		self.decButton.setMinimumWidth(100)
-		self.decButton.setIcon(self.decButton.style().standardIcon(QtWidgets.QStyle.SP_ArrowDown))
+		self.decButton.setIcon(qta.icon("fa5s.arrow-circle-down"))
+
 		self.decButton.pressed.connect(self.decrease)
 		self.decButton.released.connect(self.releaseButton)
 		self.decButton.setEnabled (False)
@@ -124,7 +141,8 @@ class Window (QtWidgets.QMainWindow):
 
 		self.flipButton = QtWidgets.QPushButton('')
 		self.flipButton.setMinimumWidth(100)
-		self.flipButton.setIcon(self.flipButton.style().standardIcon(QtWidgets.QStyle.SP_BrowserReload))
+		self.flipButton.setIcon(qta.icon("fa5s.sync"))
+
 		self.flipButton.clicked.connect(self.flip)
 		#self.flipButton.released.connect(self.releaseButton)
 		self.flipButton.setEnabled (False)
@@ -132,7 +150,8 @@ class Window (QtWidgets.QMainWindow):
 		
 		self.saveButton = QtWidgets.QPushButton('')
 		self.saveButton.setMinimumWidth(100)
-		self.saveButton.setIcon(self.saveButton.style().standardIcon(QtWidgets.QStyle.SP_DialogSaveButton))
+		self.saveButton.setIcon(qta.icon("fa5s.save"))
+
 		self.saveButton.clicked.connect(self.save)
 		self.saveButton.setEnabled (False)
 		self.hboxlayout.addWidget (self.saveButton)
@@ -487,6 +506,7 @@ class Window (QtWidgets.QMainWindow):
 		
 if __name__=='__main__':
 	app = QtWidgets.QApplication (sys.argv)
+	app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 	window = Window()
 	window.show()
 	
