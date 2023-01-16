@@ -74,88 +74,51 @@ class Window (QtWidgets.QMainWindow):
 		self.videoframe.hide()
 		
 		self.hboxlayout = QtWidgets.QHBoxLayout()
-		#self.hboxlayout.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-		self.playButton = QtWidgets.QPushButton('')
-		self.playButton.setIcon(qta.icon("fa5s.play"))
-		
-		# self.playButton.setIconSize(QtCore.QSize(60,60))
-		self.playButton.setEnabled(False)
-		
-		self.playButton.clicked.connect(self.playClicked)
-		self.playButton.setIconSize(QtCore.QSize(50, 50))
-		# self.playButton.setMinimumSize(QtCore.QSize(100, 100))
-		# self.playButton.setMaximumSize(QtCore.QSize(100, 100))
-		#self.playButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-		self.hboxlayout.addWidget (self.playButton)
+	
+		buttons = [
+			{"name": "playButton", "icon": "fa5s.play", "enabled": False, "clicked": self.playClicked},
+			{"name": "pauseButton", "icon": "fa5s.pause", "hide": True, "clicked": self.pauseButtonClicked},
+			{"name": "backButton", "icon": "fa5s.backward", "enabled": False, "clicked": self.backButtonClicked},
+			{"name": "stopButton", "icon": "fa5s.stop", "enabled": False, "clicked": self.stopClicked},
+			{"name": "nextButton", "icon": "fa5s.forward", "enabled": False, "clicked": self.nextButtonClicked},
+			{"name": "stretch", "type": "stretch", "factor": 1},
+			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False, "pressed": self.increase, "released": self.releaseButton},
+			{"name": "counterLabel", "text": "0"},
+			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False, "pressed": self.decrease, "released": self.releaseButton},
+			{"name": "flipButton", "icon": "fa5s.sync", "enabled": False, "clicked": self.flip},
+			{"name": "saveButton", "icon": "fa5s.save", "enabled": False, "clicked": self.save},
+		]
+
+		for button in buttons:
+			
+			if "type" not in button or button["type"] == "button":
+				btn = QtWidgets.QPushButton('')
+				setattr(self, button["name"], btn)
+				btn.setIconSize(QtCore.QSize(50, 50))
+			
+
+			if "icon" in button:
+				btn.setIcon(qta.icon(button["icon"], color="#3e3e3e"))
+			if "text" in button:
+				btn.setText(button["text"])
+			if "enabled" in button:
+				btn.setEnabled(button["enabled"])
+			if "hide" in button:
+				btn.hide()
+			if "clicked" in button:
+				btn.clicked.connect(button["clicked"])
+			if "pressed" in button:
+				btn.pressed.connect(button["pressed"])
+			if "released" in button:
+				btn.released.connect(button["released"])
+			if "type" in button and button["type"] == "stretch":
+				self.hboxlayout.addStretch(button["factor"])
+			else:
+				self.hboxlayout.addWidget(btn)
 
 
-		self.pauseButton = QtWidgets.QPushButton('')
-		self.pauseButton.hide()
-		self.pauseButton.setIcon(qta.icon("fa5s.pause"))
-		self.pauseButton.clicked.connect(self.pauseButtonClicked)
-		self.hboxlayout.addWidget (self.pauseButton)
 
-		self.backButton = QtWidgets.QPushButton('')
-		self.backButton.setIcon(qta.icon("fa5s.backward"))
-		self.backButton.setEnabled (False)
-		self.backButton.clicked.connect(self.backButtonClicked)
-		self.hboxlayout.addWidget (self.backButton)
-
-		self.stopButton = QtWidgets.QPushButton('')
-		self.stopButton.setIcon(qta.icon("fa5s.stop"))
-		self.stopButton.setEnabled (False)
-		self.stopButton.clicked.connect(self.stopClicked)
-		self.hboxlayout.addWidget (self.stopButton)
-
-		self.nextButton = QtWidgets.QPushButton ('')
-		self.nextButton.setIcon(qta.icon("fa5s.forward"))
-		self.nextButton.setEnabled (False)
-		self.nextButton.clicked.connect (self.nextButtonClicked)
-		self.hboxlayout.addWidget (self.nextButton)
-
-		self.hboxlayout.addStretch (1)
-		self.incButton = QtWidgets.QPushButton('')
-		self.incButton.setMinimumWidth(100)
-		self.incButton.setIcon(qta.icon("fa5s.arrow-circle-up"))
-		
-		self.incButton.setEnabled (False)
-		#self.incButton.clicked.connect(self.increase)
-		self.incButton.pressed.connect(self.increase)
-		self.incButton.released.connect(self.releaseButton)
-		self.hboxlayout.addWidget (self.incButton)
-
-		self.counterLabel = QtWidgets.QLabel("0")
-		#self.counterLabel.hide()
-		self.hboxlayout.addWidget (self.counterLabel)
-
-		self.decButton = QtWidgets.QPushButton('')
-		self.decButton.setMinimumWidth(100)
-		self.decButton.setIcon(qta.icon("fa5s.arrow-circle-down"))
-
-		self.decButton.pressed.connect(self.decrease)
-		self.decButton.released.connect(self.releaseButton)
-		self.decButton.setEnabled (False)
-		self.hboxlayout.addWidget (self.decButton)
-
-		self.hboxlayout.addStretch(1)
-
-		self.flipButton = QtWidgets.QPushButton('')
-		self.flipButton.setMinimumWidth(100)
-		self.flipButton.setIcon(qta.icon("fa5s.sync"))
-
-		self.flipButton.clicked.connect(self.flip)
-		#self.flipButton.released.connect(self.releaseButton)
-		self.flipButton.setEnabled (False)
-		self.hboxlayout.addWidget (self.flipButton)
-		
-		self.saveButton = QtWidgets.QPushButton('')
-		self.saveButton.setMinimumWidth(100)
-		self.saveButton.setIcon(qta.icon("fa5s.save"))
-
-		self.saveButton.clicked.connect(self.save)
-		self.saveButton.setEnabled (False)
-		self.hboxlayout.addWidget (self.saveButton)
-		
+			
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins (0, 0, 0, 0)
 		self.vboxlayout.addWidget(self.splashScreen)

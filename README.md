@@ -8,3 +8,4 @@ If you use this code, please send us a message!
 pip install xlsxwriter
 pip install python-vlc
 pip install PyQt5
+pip install qtawesome
