@@ -447,12 +447,12 @@ class Window (QtWidgets.QMainWindow):
 		self.playedTimes = 0
 		if len(path)>0:
 		
-			msgBox = QtWidgets.QMessageBox()
-			msgBox.setText('Select unit for time metrics')
-			msgBox.addButton(QtWidgets.QPushButton('Minutes'), QtWidgets.QMessageBox.YesRole)
-			msgBox.addButton(QtWidgets.QPushButton('Seconds'), QtWidgets.QMessageBox.NoRole)
-			msgBox.addButton(QtWidgets.QPushButton('Milliseconds'), QtWidgets.QMessageBox.RejectRole)
-			self.UNIT = msgBox.exec_()
+			#msgBox = QtWidgets.QMessageBox()
+			# msgBox.setText('Select unit for time metrics')
+			# msgBox.addButton(QtWidgets.QPushButton('Minutes'), QtWidgets.QMessageBox.YesRole)
+			# msgBox.addButton(QtWidgets.QPushButton('Seconds'), QtWidgets.QMessageBox.NoRole)
+			# msgBox.addButton(QtWidgets.QPushButton('Milliseconds'), QtWidgets.QMessageBox.RejectRole)
+			self.UNIT = self.SECOND
 		
 			self.media = self.instance.media_new(str(path))
 			self.mediaplayer.set_media(self.media)
