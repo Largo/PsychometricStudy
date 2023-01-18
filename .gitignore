@@ -1,1 +1,4 @@
 *.xlsx
+app.spec
+dist
+build
