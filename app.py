@@ -8,8 +8,6 @@ import vlc
 from vlc import EventType
 import time
 from time import gmtime, strftime
-if sys.platform == "win32":
-	import winsound
 
 import qtawesome as qta #https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
 
@@ -33,21 +31,14 @@ class Window (QtWidgets.QMainWindow):
 	UNIT = 2
 	
 	record_zeros = False
-	
 	eta = 0 ## elapsed time for counter 
 
-	
 	def __init__(self):
-	
 		super(Window, self).__init__()
-		#self.setWindowFlags(QtCore.Qt.WindowTitleHint)
-		#self.setWindowFlags(Qt.WindowTitleHint | Qt.WindowStaysOnTopHint)
 		self.setWindowIcon (QtGui.QIcon('icon.png'))
 		self.setWindowTitle(app_name)
 		self.setMinimumSize(750, 600)
 		self.resize(1200, 1000)
-		#self.setFixedSize(750, 600)
-
 		self.instance = vlc.Instance()
 		self.mediaplayer = self.instance.media_player_new()
 		
@@ -58,7 +49,7 @@ class Window (QtWidgets.QMainWindow):
 		self.splashScreen.setStyleSheet ("QFrame{background: black url(splash.png);background-repeat: no-repeat;background-position: center;}")
 		#self.palette = self.splashScreen.palette()
 		#self.palette.setColor (QtGui.QPalette.Window,QtGui.QColor(0,0,0))
-		#self.palette.setBrush (QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap("splash.png"))) # Haha, aren't I so funny??
+		#self.palette.setBrush (QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap("splash.png")))
 		#self.splashScreen.setPalette(self.palette)
 		self.splashScreen.setAutoFillBackground(True)
 		self.splashScreen.sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -96,7 +87,6 @@ class Window (QtWidgets.QMainWindow):
 				setattr(self, button["name"], btn)
 				btn.setIconSize(QtCore.QSize(50, 50))
 			
-
 			if "icon" in button:
 				btn.setIcon(qta.icon(button["icon"], color="#3e3e3e"))
 			if "text" in button:
@@ -116,9 +106,6 @@ class Window (QtWidgets.QMainWindow):
 			else:
 				self.hboxlayout.addWidget(btn)
 
-
-
-			
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins (0, 0, 0, 0)
 		self.vboxlayout.addWidget(self.splashScreen)
@@ -128,13 +115,8 @@ class Window (QtWidgets.QMainWindow):
 		hbox = QtWidgets.QHBoxLayout()
 		hbox.setContentsMargins (10, 0, 10, 0)
 		self.timeElapsed = QtWidgets.QLabel("0")
-		
-		#self.timeElapsed.sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-		#self.timeElapsed.setSizePolicy(self.timeElapsed.sizePolicy)
-
 
 		self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-		#self.slider = QtGui.QProgressBar()
 		self.slider.setEnabled (False)
 		self.slider.valueChanged.connect(self.sliderChanged)
 		self.totalTime = QtWidgets.QLabel("0")
@@ -156,13 +138,8 @@ class Window (QtWidgets.QMainWindow):
 		
 	def updateCounter (self):
 		self.counterLabel.setText(str(self.points))
-	
-	def beep (self):
-		if sys.platform == "win32":
-			winsound.Beep (500, 50)
-		
+			
 	def sliderChanged (self, val):
-		print("val changed")
 		cur = self.mediaplayer.get_time()
 		self.sliderSilentValue (val)
 		self.mediaplayer.set_time (val)
@@ -192,20 +169,14 @@ class Window (QtWidgets.QMainWindow):
 		if self.points<10:
 			self.points = self.points*(-1)
 			self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
-			#self.y_axis[int(self.mediaplayer.get_time()/tf)] = self.points
-			self.beep()
-			#print(self.y_axis)
-		
+
 	def increase (self):
 		self.record_zeros = True
 		tf = self.timeFactor()
 		if self.points<10:
 			self.points += 1
 			self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
-			#self.y_axis[int(self.mediaplayer.get_time()/tf)] = self.points
-			self.beep()
 			self.locked = True
-			#print(self.y_axis)
 			self.eta = time.time()
 	
 	def decrease (self):
@@ -214,22 +185,13 @@ class Window (QtWidgets.QMainWindow):
 		if self.points>(-10):
 			self.points -= 1
 			self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
-			#self.y_axis[int(self.mediaplayer.get_time()/tf)] = self.points
-			self.beep()
 			self.locked = True
 			self.eta = time.time()
 			
 	def stopPlayer(self):
-		print("stop player called")
 		self.stopClicked(None)
 	
-	def end_callback (self, event):
-		## TODO
-		#self.mediaplayer.set_position(0.0)
-		'''time.sleep(1)
-		self.stopClicked(None)
-		time.sleep(1)'''
-		
+	def end_callback (self, event):	
 		self.pauseButton.hide()
 		self.playButton.show()
 
@@ -238,95 +200,78 @@ class Window (QtWidgets.QMainWindow):
 		self.decButton.setEnabled (False)
 		self.flipButton.setEnabled (False)
 		
-		'''if self.mediaplayer != None:
-			self.stopButton.hide()
-			self.playButton.show()'''
-	
-		##self.unload(".")
-		'''time.sleep(3)
-		self.stopClicked(None)'''
-		#QtCore.QTimer.singleShot(3000, self.stopPlayer)	
-		print("ended")
 		self.showSplash()
 		
 	def pos_callback (self, event, player): 
 		self.updateCounter()
-		sec = int(player.get_time())/1000
-		min = int(player.get_time())/(60*1000)
-		#self.timeElapsed.setText(str(sec))
+		playerTime = player.get_time() 
+		sec = int(playerTime)/1000
+		min = int(playerTime)/(60*1000)
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 		
 		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and len(self.points_list)>0:
 			tf = self.timeFactor()
-			self.points_list.append([int(player.get_time()/tf), self.points])
+			self.points_list.append([int(playerTime/tf), self.points])
 				
 		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and self.locked == True:
 			tf = self.timeFactor()
-			self.points_list.append([int(player.get_time()/tf), self.points])
+			self.points_list.append([int(playerTime/tf), self.points])
 		
 		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and self.locked == False:
 			tf = self.timeFactor()
 			if (time.time()-self.eta)>=2:
 				if self.points>0:
 					self.points -= 1
-					#self.points_list.append([int(player.get_time()/tf), self.points])
-					#self.y_axis[int(player.get_time()/tf)] = self.points
 					
 				if self.points<0:
 					self.points += 1
-					#self.points_list.append([int(player.get_time()/tf), self.points])
-					#self.y_axis[int(player.get_time()/tf)] = self.points
 				
 		if self.slider!=None:
-			self.sliderSilentValue (int(player.get_time()))
+			self.sliderSilentValue (int(playerTime))
 			
-		self.prevSecond = int(player.get_time())/1000
-		self.prevMin = int(player.get_time())/(60*1000)
+		self.prevSecond = int(playerTime)/1000
+		self.prevMin = int(playerTime)/(60*1000)
 		
-	def setListners (self):
+	def setListeners (self):
 		
 		if self.mediaplayer != None:
 			event_manager = self.mediaplayer.event_manager()
 			event_manager.event_attach (EventType.MediaPlayerEndReached, self.end_callback)
 			event_manager.event_attach(EventType.MediaPlayerPositionChanged, self.pos_callback, self.mediaplayer)
 	
+	def setTheFilename (self) :
+		#QtWidgets.QFileDialog.getOpenFileName(self, "Load Video File", '', "video files (*.*)")
+		#self.excelFilename, _ = str(QtWidgets.QFileDialog.getSaveFileName(self, "Save Excel File", '', "video files (*.*)")[0])
+		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', '', 'Excel Files (*.xlsx);;All Files (*)')[0]
+		#self.excelFilename = os.path.basename(self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
+
+	def saveAs (self, event) :
+		self.excelFilename = None
+		if self.excelFilename is None:
+			self.setTheFilename()
+		self.save
+
+
 	def save (self, event):
-	
-		self.x_axis = []
-		self.y_axis = []
+		self.x_axis = {}
+		self.y_axis = {}
+
+		if self.excelFilename is None:
+			self.setTheFilename()
 		
 		if len(self.points_list)>0:
-
 			for i in range(0, len(self.points_list)):
-				'''try:
-					[p_y, p_v] = self.points_list[i-1]
-				except Exception:
-					[p_y, p_v] = [0, 0]
-					
-				[y, value] = self.points_list[i]
-				
-				for k in range(p_y, y):
-					self.y_axis[k] = p_v
-					
-				print(y, value)
-				self.y_axis [y] = value'''
-				
 				[y, value] = self.points_list[i]
 				self.x_axis.append (y)
 				self.y_axis.append (value)
-			'''[ly,lv] = self.points_list[-1]
-			for i in range(ly, len(self.y_axis)):
-				self.y_axis[i] = lv'''
 			
-			filename = os.path.basename(self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
-			workbook = xlsxwriter.Workbook(filename+'.xlsx')
+			workbook = xlsxwriter.Workbook(self.excelFilename) #'.xlsx'
 			worksheet = workbook.add_worksheet()
 			
 			## chart
 			chart = workbook.add_chart({'type':'line'})
 			
 			data = [self.x_axis, self.y_axis]
-			#worksheet.write_column('A1', data[0])
 			for i in range (0, len(data[0])):
 				data[0][i] = str(datetime.timedelta(seconds=int(data[0][i])))
 			worksheet.write_column('A1', data[0])
@@ -351,7 +296,7 @@ class Window (QtWidgets.QMainWindow):
 			worksheet.insert_chart('C1', chart)
 			workbook.close()
 			
-			QtWidgets.QMessageBox.information(self, "File Saved","File saved at "+os.getcwd()+"\\"+str(filename)+".xlsx", QtWidgets.QMessageBox.Yes)
+			QtWidgets.QMessageBox.information(self, "File Saved","File saved at "+os.getcwd()+"\\"+str(self.excelFilename)+".xlsx", QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
 		else:
 			QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
@@ -428,12 +373,6 @@ class Window (QtWidgets.QMainWindow):
 		self.filename = path
 		self.playedTimes = 0
 		if len(path)>0:
-		
-			#msgBox = QtWidgets.QMessageBox()
-			# msgBox.setText('Select unit for time metrics')
-			# msgBox.addButton(QtWidgets.QPushButton('Minutes'), QtWidgets.QMessageBox.YesRole)
-			# msgBox.addButton(QtWidgets.QPushButton('Seconds'), QtWidgets.QMessageBox.NoRole)
-			# msgBox.addButton(QtWidgets.QPushButton('Milliseconds'), QtWidgets.QMessageBox.RejectRole)
 			self.UNIT = self.SECOND
 		
 			self.media = self.instance.media_new(str(path))
@@ -446,31 +385,38 @@ class Window (QtWidgets.QMainWindow):
 			elif sys.platform == "darwin": # for MacOS
 				self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
 			
-			self.setListners()
+			self.setListeners()
 			self.playButton.setEnabled (True)
-			#self.backButton.setEnabled (True)
-			#self.nextButton.setEnabled (True)
-			#self.stopButton.setEnabled (True)
-			
-			#self.incButton.setEnabled (True)
-			#self.decButton.setEnabled (True)
 		
 	def createMenu (self):
 		self.openAction = QtWidgets.QAction ("Load video file", self, triggered=self.loadVideo)
 		self.openAction.setShortcut('Ctrl+O')
-		
+
+		self.saveAction = QtWidgets.QAction ("Save", self, triggered=self.save)
+		self.saveAction.setShortcut('Ctrl+S')
+
+		self.saveAsAction = QtWidgets.QAction ("Save as", self, triggered=self.saveAs)
+
 		self.exitAction = QtWidgets.QAction ("Exit", self, triggered=QtCore.QCoreApplication.instance().quit)
 		self.exitAction.setShortcut('Ctrl+Q')
 
 		menubar = self.menuBar()
 		fileMenu = menubar.addMenu('&Session')
 		fileMenu.addAction(self.openAction)
+		fileMenu.addAction(self.saveAction)
+		fileMenu.addAction(self.saveAsAction)
 		fileMenu.addAction(self.exitAction)
-		
+
+
+def crash_handler(exctype, value, traceback):
+    # Handle the exception
+    print("An error occurred:", value)
+
 if __name__=='__main__':
+	sys.excepthook = crash_handler
 	app = QtWidgets.QApplication (sys.argv)
 	app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 	window = Window()
 	window.show()
-	
+
 	sys.exit (app.exec_())
