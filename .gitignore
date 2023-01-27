@@ -1,4 +1,5 @@
 *.xlsx
 app.spec
 dist
+dist2
 build

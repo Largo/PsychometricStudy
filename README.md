@@ -9,3 +9,10 @@ pip install xlsxwriter
 pip install python-vlc
 pip install PyQt5
 pip install qtawesome
+
+pip install pyinstaller
+
+
+# How to create an .exe on windows:
+
+pyinstaller --noconsole  app.py
