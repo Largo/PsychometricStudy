@@ -42,6 +42,8 @@ class Window (QtWidgets.QMainWindow):
 		self.instance = vlc.Instance()
 		self.mediaplayer = self.instance.media_player_new()
 		
+		self.excelFilename = None
+
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget (self.widget)
 		
@@ -140,7 +142,6 @@ class Window (QtWidgets.QMainWindow):
 		self.counterLabel.setText(str(self.points))
 			
 	def sliderChanged (self, val):
-		cur = self.mediaplayer.get_time()
 		self.sliderSilentValue (val)
 		self.mediaplayer.set_time (val)
 		
@@ -205,8 +206,8 @@ class Window (QtWidgets.QMainWindow):
 	def pos_callback (self, event, player): 
 		self.updateCounter()
 		playerTime = player.get_time() 
-		sec = int(playerTime)/1000
-		min = int(playerTime)/(60*1000)
+		sec = int(playerTime/1000)
+		min = int(playerTime/(60*1000))
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 		
 		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and len(self.points_list)>0:
@@ -246,22 +247,28 @@ class Window (QtWidgets.QMainWindow):
 		#self.excelFilename = os.path.basename(self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
 
 	def saveAs (self, event) :
-		self.excelFilename = None
-		if self.excelFilename is None:
-			self.setTheFilename()
-		self.save
+		self.setTheFilename()
+		if self.excelFilename is not None:
+			self.save(event)
 
 
 	def save (self, event):
-		self.x_axis = {}
-		self.y_axis = {}
+		self.x_axis = []
+		self.y_axis = []
+		temporaryList = {}
 
 		if self.excelFilename is None:
-			self.setTheFilename()
+			self.excelFilename = os.path.basename(self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
+			#self.setTheFilename()
 		
 		if len(self.points_list)>0:
 			for i in range(0, len(self.points_list)):
 				[y, value] = self.points_list[i]
+				temporaryList[y] = value
+			# Only take the latest value in the list
+			
+			# iterate over the hash temporaryList	and get the key and value
+			for y, value in dict(sorted(temporaryList.items())).items():
 				self.x_axis.append (y)
 				self.y_axis.append (value)
 			
@@ -298,8 +305,8 @@ class Window (QtWidgets.QMainWindow):
 			
 			QtWidgets.QMessageBox.information(self, "File Saved","File saved at "+os.getcwd()+"\\"+str(self.excelFilename)+".xlsx", QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
-		else:
-			QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
+		#else:
+			#QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
 
 	def timeFactor (self):
 		timex =1
@@ -329,7 +336,7 @@ class Window (QtWidgets.QMainWindow):
 			self.slider.setRange (0, self.media.get_duration())
 			self.slider.setValue (0)
 			#self.totalTime.setText(str(self.media.get_duration()/1000))
-			self.totalTime.setText(str(datetime.timedelta(seconds=self.media.get_duration()/1000)))
+			self.totalTime.setText(str(datetime.timedelta(seconds=int(self.media.get_duration()/1000))))
 			self.record_zeros = False
 
 	def playClicked (self, event):
@@ -419,4 +426,5 @@ if __name__=='__main__':
 	window = Window()
 	window.show()
 
+	#app.exec_()
 	sys.exit (app.exec_())
