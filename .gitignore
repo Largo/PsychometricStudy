@@ -3,3 +3,6 @@ app.spec
 dist
 dist2
 build
+release
+app.zip
+app.app
