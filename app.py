@@ -19,6 +19,15 @@ import datetime
 
 app_name = "Psychometric Study"
 
+class ClickableSlider(QtWidgets.QSlider):
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            # Determine the position of the click within the slider
+            click_value = self.minimum() + (self.maximum() - self.minimum()) * event.pos().x() / self.width()
+            # Set the slider position to the clicked value
+            self.setValue(int(click_value))
+        super().mousePressEvent(event)
+
 
 class Window (QtWidgets.QMainWindow):
 	points = 0
@@ -105,6 +114,9 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.stopClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "clicked": self.nextButtonClicked},
+			{"name": "stretch", "type": "stretch", "factor": 1},    
+			{"name": "skipButton", "icon": "fa5s.fast-forward",
+			    "enabled": False, "clicked": self.skipButtonClicked},
 			{"name": "stretch", "type": "stretch", "factor": 1},
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
 			    "pressed": self.increase, "released": self.releaseButton},
@@ -122,12 +134,13 @@ class Window (QtWidgets.QMainWindow):
 			if "type" not in button or button["type"] == "button":
 				btn = QtWidgets.QPushButton('')
 				setattr(self, button["name"], btn)
-				btn.setIconSize(QtCore.QSize(50, 50))
+				btn.setIconSize(QtCore.QSize(80, 80))
 
 			if "icon" in button:
 				btn.setIcon(qta.icon(button["icon"], color="#3e3e3e"))
 			if "text" in button:
 				btn.setText(button["text"])
+				btn.setFont(QFont(QFont().defaultFamily(), 21))
 			if "enabled" in button:
 				btn.setEnabled(button["enabled"])
 			if "hide" in button:
@@ -153,18 +166,17 @@ class Window (QtWidgets.QMainWindow):
 		hbox.setContentsMargins(10, 0, 10, 0)
 		self.timeElapsed = QtWidgets.QLabel("0")
 
-		self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+		self.slider = ClickableSlider(QtCore.Qt.Horizontal)
 		self.slider.setEnabled(False)
 		self.slider.valueChanged.connect(self.sliderChanged)
+
+		# call self.sliderClicked when slider is clicked
+		#self.slider.actionTriggered.connect(self.sliderClicked)
+
 		self.totalTime = QtWidgets.QLabel("0")
 
 		hbox.addWidget(self.timeElapsed)
 		hbox.addWidget(self.slider)
-
-
-		self.slider2 = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-		self.slider2.setEnabled(True)
-		hbox.addWidget(self.slider2)
 
 		hbox.addWidget(self.totalTime)
 
@@ -190,10 +202,20 @@ class Window (QtWidgets.QMainWindow):
 		#if self.mediaplayer != None:
 		#	self.mediaplayer.pause()
 		#	print("pause")
-		self.sliderSilentValue(val)
+		#self.sliderSilentValue(val)
 		self.mediaplayer.set_time(int(val))
 		#if self.mediaplayer != None:
 		#	self.mediaplayer.play()
+
+	#def sliderClicked(self, val):
+		#print("clicked")
+	#	if self.mediaplayer != None:
+			#if self.mediaplayer is not paused
+	#		if self.mediaplayer.is_playing():
+	#			self.mediaplayer.pause()
+		#print(val)
+	#	print(val)
+	#	self.sliderSilentValue(val)
 
 	def sliderSilentValue(self, val):
 		self.slider.blockSignals(True)
@@ -211,6 +233,10 @@ class Window (QtWidgets.QMainWindow):
 	def nextButtonClicked(self, event):
 		if self.mediaplayer != None:
 			self.mediaplayer.set_time(self.mediaplayer.get_time() + 6000)
+
+	def skipButtonClicked(self, event):
+		if self.mediaplayer != None:
+			self.mediaplayer.set_time(self.mediaplayer.get_time() + 60000)
 
 	def releaseButton(self):
 		self.locked = False
@@ -251,7 +277,7 @@ class Window (QtWidgets.QMainWindow):
 		self.decButton.setEnabled(False)
 		self.flipButton.setEnabled(False)
 
-		self.showSplash()
+		#self.showSplash()
 
 	def pos_callback(self, event, player):
 		self.updateCounter()
@@ -413,6 +439,7 @@ class Window (QtWidgets.QMainWindow):
 
 			self.backButton.setEnabled(True)
 			self.nextButton.setEnabled(True)
+			self.skipButton.setEnabled(True)
 			self.stopButton.setEnabled(True)
 			self.saveButton.setEnabled(True)
 			self.incButton.setEnabled(True)
