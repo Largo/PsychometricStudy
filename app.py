@@ -46,27 +46,29 @@ class Window (QtWidgets.QMainWindow):
 		self.instance = vlc.Instance()
 		self.mediaplayer = self.instance.media_player_new()
 
-		self.excelFilename = None
+
 
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget(self.widget)
 
+		self.defaultConfig = {}
 		try:
 			# Check if the file exists
 			if os.path.isfile("default.json"):
 				# Open the file
 				with open("default.json", "r") as file:
 					# Load the JSON data from the file
-					data = json.load(file)
-
-				# Now you can access the data as a Python object
-				print(data)
-
+					self.defaultConfig = json.load(file)
 			else:
-				print("The file does not exist.")
+				print("The config file does not exist.")
 
 		except Exception as e:
 			print(f"An error occurred: {e}")
+
+		self.excelFilename = None
+		if "defaultExcelPath" in self.defaultConfig:
+			self.excelFilename = self.defaultConfig["defaultExcelPath"]
+
 
 		self.splashScreen = QtWidgets.QFrame()
 		self.splashScreen.setStyleSheet(
@@ -109,8 +111,8 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "counterLabel", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
 			    "pressed": self.decrease, "released": self.releaseButton},
-			{"name": "flipButton", "icon": "fa5s.sync",
-			    "enabled": False, "clicked": self.flip},
+			{"name": "flipButton", "icon": "fa5s.surprise",
+			    "enabled": False, "clicked": self.addMarker},
 			{"name": "saveButton", "icon": "fa5s.save",
 			    "enabled": False, "clicked": self.save},
 		]
@@ -176,6 +178,9 @@ class Window (QtWidgets.QMainWindow):
 
 		self.prevSecond = 0
 		self.prevMin = 0
+
+		if "defaultVideoPath" in self.defaultConfig:
+			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
@@ -435,6 +440,10 @@ class Window (QtWidgets.QMainWindow):
 		self.stopClicked(None)
 		path = str(QtWidgets.QFileDialog.getOpenFileName(
 		    self, "Load Video File", '', "video files (*.*)")[0])
+		self.loadVideoFromPath(path)
+
+
+	def loadVideoFromPath(self, path):
 		print(path)
 		self.filename = path
 		self.playedTimes = 0
@@ -453,6 +462,7 @@ class Window (QtWidgets.QMainWindow):
 
 			self.setListeners()
 			self.playButton.setEnabled(True)
+
 
 	def createMenu(self):
 		self.openAction = QtWidgets.QAction(
@@ -487,6 +497,10 @@ class Window (QtWidgets.QMainWindow):
 	def initDialog(self):
 		self.lower_slider_value = -10
 		self.upper_slider_value = 10
+		if "lowerSliderValue" in self.defaultConfig:
+			self.lower_slider_value = self.defaultConfig["lowerSliderValue"]
+		if "upperSliderValue" in self.defaultConfig:
+			self.upper_slider_value = self.defaultConfig["upperSliderValue"]
 	
 
 	def showDialog(self):
@@ -562,7 +576,12 @@ class Window (QtWidgets.QMainWindow):
 def crash_handler(exctype, value, traceback):
     # Handle the exception
 	print("An error occurred:", value)
-	#print(traceback)
+	# Print the line where the error occurred
+	tb_list = traceback.extract_tb(traceback)
+	for tb in tb_list:
+		filename, line_num, func_name, source_code = tb
+		print(f"File {filename}, line {line_num}, in {func_name}")
+		print(f"  {source_code}")
 
 if __name__=='__main__':
 	sys.excepthook = crash_handler
