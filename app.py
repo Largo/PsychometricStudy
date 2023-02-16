@@ -4,6 +4,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QFontDatabase, QFont
+from PyQt5.QtWidgets import QShortcut
+from PyQt5.QtGui import QKeySequence
 import vlc
 from vlc import EventType
 import time
@@ -103,6 +105,8 @@ class Window (QtWidgets.QMainWindow):
 
 		self.hboxlayout = QtWidgets.QHBoxLayout()
 
+		fontColor = "#3e3e3e"
+
 		buttons = [
 			{"name": "playButton", "icon": "fa5s.play",
 			    "enabled": False, "clicked": self.playClicked},
@@ -123,8 +127,8 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "counterLabel", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
 			    "pressed": self.decrease, "released": self.releaseButton},
-			{"name": "flipButton", "icon": "fa5s.surprise",
-			    "enabled": False, "clicked": self.addMarker},
+			{"name": "markerButton", "icon": "fa5s.surprise",
+			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"]},
 			{"name": "saveButton", "icon": "fa5s.save",
 			    "enabled": False, "clicked": self.save},
 		]
@@ -137,10 +141,11 @@ class Window (QtWidgets.QMainWindow):
 				btn.setIconSize(QtCore.QSize(80, 80))
 
 			if "icon" in button:
-				btn.setIcon(qta.icon(button["icon"], color="#3e3e3e"))
+				btn.setIcon(qta.icon(button["icon"], color=fontColor))
 			if "text" in button:
 				btn.setText(button["text"])
 				btn.setFont(QFont(QFont().defaultFamily(), 21))
+				btn.setStyleSheet("color: " + fontColor)
 			if "enabled" in button:
 				btn.setEnabled(button["enabled"])
 			if "hide" in button:
@@ -151,10 +156,25 @@ class Window (QtWidgets.QMainWindow):
 				btn.pressed.connect(button["pressed"])
 			if "released" in button:
 				btn.released.connect(button["released"])
+
 			if "type" in button and button["type"] == "stretch":
 				self.hboxlayout.addStretch(button["factor"])
 			else:
 				self.hboxlayout.addWidget(btn)
+
+			if "hotkey" in button:
+				# loop over button["hotkey"] and add a shortcut for each one
+				for hotkey in button["hotkey"]:
+					buttonShortcut = QShortcut(QKeySequence(hotkey), self)
+					buttonShortcut.setAutoRepeat(False)
+					buttonShortcut.setEnabled(True)
+					buttonShortcut.activated.connect(button["clicked"])
+
+				#buttonShortcut = QShortcut(QKeySequence(button["hotkey"]), self)
+				#buttonShortcut.setAutoRepeat(False)
+				#buttonShortcut.setEnabled(True)
+				#buttonShortcut.activated.connect(button["clicked"])
+
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
@@ -164,7 +184,9 @@ class Window (QtWidgets.QMainWindow):
 		# qslider here
 		hbox = QtWidgets.QHBoxLayout()
 		hbox.setContentsMargins(10, 0, 10, 0)
-		self.timeElapsed = QtWidgets.QLabel("0")
+		self.timeElapsed = QtWidgets.QLabel("0:00:00")
+
+		# make sure that time elapsed has a minimum width that is enough to display 0:00:00
 
 		self.slider = ClickableSlider(QtCore.Qt.Horizontal)
 		self.slider.setEnabled(False)
@@ -173,7 +195,10 @@ class Window (QtWidgets.QMainWindow):
 		# call self.sliderClicked when slider is clicked
 		#self.slider.actionTriggered.connect(self.sliderClicked)
 
-		self.totalTime = QtWidgets.QLabel("0")
+		self.totalTime = QtWidgets.QLabel("0:00:00")
+		self.totalTime.setMinimumWidth(105)
+		self.timeElapsed.setMinimumWidth(105)	
+
 
 		hbox.addWidget(self.timeElapsed)
 		hbox.addWidget(self.slider)
@@ -185,6 +210,13 @@ class Window (QtWidgets.QMainWindow):
 
 		self.vboxlayout.addLayout(self.hboxlayout)
 		self.widget.setLayout(self.vboxlayout)
+
+		# Show the user the hotkeys add after hboxlayout
+		self.hotkeyLabel = QtWidgets.QLabel()
+		self.hotkeyLabel.setText("Hotkeys: <b>Space</b> to play/pause, <b>Enter</b> to add marker, <b>Ctrl+S</b> to save")
+		self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 12))
+		self.hotkeyLabel.setStyleSheet("color: " + fontColor)
+		self.vboxlayout.addWidget(self.hotkeyLabel)
 
 		self.createMenu()
 
@@ -198,24 +230,7 @@ class Window (QtWidgets.QMainWindow):
 		self.counterLabel.setText(str(self.points))
 
 	def sliderChanged(self, val):
-		print(val)
-		#if self.mediaplayer != None:
-		#	self.mediaplayer.pause()
-		#	print("pause")
-		#self.sliderSilentValue(val)
 		self.mediaplayer.set_time(int(val))
-		#if self.mediaplayer != None:
-		#	self.mediaplayer.play()
-
-	#def sliderClicked(self, val):
-		#print("clicked")
-	#	if self.mediaplayer != None:
-			#if self.mediaplayer is not paused
-	#		if self.mediaplayer.is_playing():
-	#			self.mediaplayer.pause()
-		#print(val)
-	#	print(val)
-	#	self.sliderSilentValue(val)
 
 	def sliderSilentValue(self, val):
 		self.slider.blockSignals(True)
@@ -269,13 +284,18 @@ class Window (QtWidgets.QMainWindow):
 		self.stopClicked(None)
 
 	def end_callback(self, event):
-		self.pauseButton.hide()
-		self.playButton.show()
+		print("test")
+		self.stopClicked(None)
 
-		self.saveButton.setEnabled(True)
-		self.incButton.setEnabled(False)
-		self.decButton.setEnabled(False)
-		self.flipButton.setEnabled(False)
+		#self.pauseButton.hide()
+		#self.playButton.show()
+
+		
+
+		#self.saveButton.setEnabled(True)
+		#self.incButton.setEnabled(False)
+		#self.decButton.setEnabled(False)
+		#self.markerButton.setEnabled(False)
 
 		#self.showSplash()
 
@@ -306,8 +326,8 @@ class Window (QtWidgets.QMainWindow):
 		if self.slider != None:
 			self.sliderSilentValue(int(playerTime))
 
-		self.prevSecond = int(playerTime)/1000
-		self.prevMin = int(playerTime)/(60*1000)
+		self.prevSecond = int(playerTime/1000)
+		self.prevMin = int(playerTime/(60*1000))
 
 	def setListeners(self):
 
@@ -444,7 +464,7 @@ class Window (QtWidgets.QMainWindow):
 			self.saveButton.setEnabled(True)
 			self.incButton.setEnabled(True)
 			self.decButton.setEnabled(True)
-			self.flipButton.setEnabled(True)
+			self.markerButton.setEnabled(True)
 			self.slider.setEnabled(True)
 
 	def showSplash(self, show=True):
@@ -457,7 +477,6 @@ class Window (QtWidgets.QMainWindow):
 
 	def stopClicked(self, event):
 		if self.mediaplayer != None:
-			print("We have mediaplayer")
 			self.mediaplayer.stop()
 			self.pauseButton.hide()
 			self.playButton.show()
@@ -478,8 +497,9 @@ class Window (QtWidgets.QMainWindow):
 			self.UNIT = self.SECOND
 
 			self.media = self.instance.media_new(str(path))
-			self.mediaplayer.set_media(self.media)
+			self.mediaplayer.set_media(self.media)	
 			self.media.parse()
+
 			if sys.platform.startswith('linux'):  # for Linux using the X Server
 				self.mediaplayer.set_xwindow(int(self.videoframe.winId()))
 			elif sys.platform == "win32":  # for Windows
@@ -500,13 +520,14 @@ class Window (QtWidgets.QMainWindow):
 		self.saveAction.setShortcut('Ctrl+S')
 
 		self.saveAsAction = QtWidgets.QAction("Save as", self, triggered=self.saveAs)
+		self.saveAsAction.setShortcut('Ctrl+Shift+S')
 
 		self.exitAction = QtWidgets.QAction(
 		    "Exit", self, triggered=QtCore.QCoreApplication.instance().quit)
 		self.exitAction.setShortcut('Ctrl+Q')
 
 		menubar = self.menuBar()
-		fileMenu = menubar.addMenu('&Session')
+		fileMenu = menubar.addMenu('&File')
 		fileMenu.addAction(self.openAction)
 		fileMenu.addAction(self.saveAction)
 		fileMenu.addAction(self.saveAsAction)
@@ -514,7 +535,7 @@ class Window (QtWidgets.QMainWindow):
 
 		self.initDialog()
 
-		set_range_action = QtWidgets.QAction("Set Range", self)
+		set_range_action = QtWidgets.QAction("&Set Range", self)
 		set_range_action.triggered.connect(self.showDialog)
 		menubar.addAction(set_range_action)
 
@@ -594,6 +615,7 @@ class Window (QtWidgets.QMainWindow):
 		label.setText(f"Range: {lower_value} to {upper_value}")
 
 	def addMarker(self):
+		print("test")
 		if self.mediaplayer != None:
 			tf = self.timeFactor()
 			self.markers_list.append([int(self.mediaplayer.get_time()/tf), True])
