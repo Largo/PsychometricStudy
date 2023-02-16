@@ -105,13 +105,15 @@ class Window (QtWidgets.QMainWindow):
 
 		self.hboxlayout = QtWidgets.QHBoxLayout()
 
+		self.shortcuts = []
+
 		fontColor = "#3e3e3e"
 
 		buttons = [
 			{"name": "playButton", "icon": "fa5s.play",
-			    "enabled": False, "clicked": self.playClicked},
+			    "enabled": False, "clicked": self.changePlayButton, "hotkey": ["Space"]},
 			{"name": "pauseButton", "icon": "fa5s.pause",
-			    "hide": True, "clicked": self.pauseButtonClicked},
+			    "hide": True, "clicked": self.changePlayButton},
 			{"name": "backButton", "icon": "fa5s.backward",
 			    "enabled": False, "clicked": self.backButtonClicked},
 			{"name": "stopButton", "icon": "fa5s.stop",
@@ -139,6 +141,8 @@ class Window (QtWidgets.QMainWindow):
 				btn = QtWidgets.QPushButton('')
 				setattr(self, button["name"], btn)
 				btn.setIconSize(QtCore.QSize(80, 80))
+				# set focus policy to no focus
+				btn.setFocusPolicy(QtCore.Qt.NoFocus)
 
 			if "icon" in button:
 				btn.setIcon(qta.icon(button["icon"], color=fontColor))
@@ -163,18 +167,18 @@ class Window (QtWidgets.QMainWindow):
 				self.hboxlayout.addWidget(btn)
 
 			if "hotkey" in button:
+				#print(f"Adding hotkey for {button['name']}")
+				# print(button["hotkey"])
 				# loop over button["hotkey"] and add a shortcut for each one
 				for hotkey in button["hotkey"]:
+					print(f"Adding hotkey {hotkey} for {button['name']}")
 					buttonShortcut = QShortcut(QKeySequence(hotkey), self)
 					buttonShortcut.setAutoRepeat(False)
 					buttonShortcut.setEnabled(True)
-					buttonShortcut.activated.connect(button["clicked"])
-
-				#buttonShortcut = QShortcut(QKeySequence(button["hotkey"]), self)
-				#buttonShortcut.setAutoRepeat(False)
-				#buttonShortcut.setEnabled(True)
-				#buttonShortcut.activated.connect(button["clicked"])
-
+					# add lamda to connect and only run handler if button is enabled
+					buttonShortcut.activated.connect(lambda btn=btn: btn.click() if btn.isEnabled() else None)
+					# add the shortcut to the list of shortcuts
+					self.shortcuts.append(buttonShortcut)
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
@@ -474,6 +478,17 @@ class Window (QtWidgets.QMainWindow):
 		else:
 			self.videoframe.show()
 			self.splashScreen.hide()
+
+	def changePlayButton(self, event):
+		# if the video is playing, change the button to pause
+		if self.mediaplayer.is_playing():
+			self.pauseButtonClicked(None)
+			#self.pauseButton.show()
+			#self.playButton.hide()
+		else:
+			self.playClicked(None)
+			#self.pauseButton.hide()
+			#self.playButton.show()
 
 	def stopClicked(self, event):
 		if self.mediaplayer != None:
