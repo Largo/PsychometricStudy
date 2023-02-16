@@ -125,10 +125,10 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.skipButtonClicked},
 			{"name": "stretch", "type": "stretch", "factor": 1},
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
-			    "pressed": self.increase, "released": self.releaseButton},
+			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"]},
 			{"name": "counterLabel", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
-			    "pressed": self.decrease, "released": self.releaseButton},
+			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"]},
 			{"name": "markerButton", "icon": "fa5s.surprise",
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"]},
 			{"name": "saveButton", "icon": "fa5s.save",
@@ -217,7 +217,11 @@ class Window (QtWidgets.QMainWindow):
 
 		# Show the user the hotkeys add after hboxlayout
 		self.hotkeyLabel = QtWidgets.QLabel()
-		self.hotkeyLabel.setText("Hotkeys: <b>Space</b> to play/pause, <b>Enter</b> to add marker, <b>Ctrl+S</b> to save")
+		# make the hotkey label wrap
+		self.hotkeyLabel.setWordWrap(True)
+		# add margin around
+		self.hotkeyLabel.setContentsMargins(10, 0, 10, 0)
+		self.hotkeyLabel.setText("Hotkeys: <b>Space</b> to play/pause, <b>Enter</b> to add marker, <b>Ctrl+S</b> to save, <b>Up</b>/<b>Down</b> to increase/decrease points")
 		self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 12))
 		self.hotkeyLabel.setStyleSheet("color: " + fontColor)
 		self.vboxlayout.addWidget(self.hotkeyLabel)
@@ -251,11 +255,15 @@ class Window (QtWidgets.QMainWindow):
 
 	def nextButtonClicked(self, event):
 		if self.mediaplayer != None:
-			self.mediaplayer.set_time(self.mediaplayer.get_time() + 6000)
+			self.mediaplayer.set_time(self.mediaplayer.get_time() + 1000)
 
 	def skipButtonClicked(self, event):
+		if "skipTimeInSec" in self.defaultConfig:
+			skipTimeInSec = self.defaultConfig["skipTimeInSec"]
+		else:
+			skipTimeInSec = 60
 		if self.mediaplayer != None:
-			self.mediaplayer.set_time(self.mediaplayer.get_time() + 60000)
+			self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
 
 	def releaseButton(self):
 		self.locked = False
