@@ -5,11 +5,14 @@ If you use this code, please send us a message!
 
 ## Installation
 
+### Automatic
+pipenv install
+
+### Manual
 pip install xlsxwriter
 pip install python-vlc
 pip install PyQt5
 pip install qtawesome
-
 pip install pyinstaller
 
 

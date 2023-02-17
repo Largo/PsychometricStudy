@@ -12,6 +12,8 @@ import time
 from time import gmtime, strftime
 import json
 
+import threading
+
 # https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
 import qtawesome as qta
 
@@ -230,7 +232,6 @@ class Window (QtWidgets.QMainWindow):
 
 		self.prevSecond = 0
 		self.prevMin = 0
-
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
@@ -263,7 +264,10 @@ class Window (QtWidgets.QMainWindow):
 		else:
 			skipTimeInSec = 60
 		if self.mediaplayer != None:
-			self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
+			if self.mediaplayer.get_time() + (skipTimeInSec * 1000) > self.mediaplayer.get_length():
+				self.mediaplayer.set_time(self.mediaplayer.get_length())
+			else:
+				self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
 
 	def releaseButton(self):
 		self.locked = False
@@ -297,7 +301,6 @@ class Window (QtWidgets.QMainWindow):
 
 	def end_callback(self, event):
 		print("test")
-		self.stopClicked(None)
 
 		#self.pauseButton.hide()
 		#self.playButton.show()
@@ -312,6 +315,18 @@ class Window (QtWidgets.QMainWindow):
 		#self.showSplash()
 
 	def pos_callback(self, event, player):
+		# check if video has ended, if yes click stopClicked
+		if player.get_time() > player.get_length()/2:
+			if player.is_playing() == True:
+				#player.pause()
+				
+				self.pauseButton.hide()
+				self.playButton.show()
+				self.showSplash()
+				player.stop()
+				return
+		
+
 		self.updateCounter()
 		playerTime = player.get_time()
 		sec = int(playerTime/1000)
@@ -345,8 +360,8 @@ class Window (QtWidgets.QMainWindow):
 
 		if self.mediaplayer != None:
 			event_manager = self.mediaplayer.event_manager()
-			event_manager.event_attach(
-			    EventType.MediaPlayerEndReached, self.end_callback)
+			#event_manager.event_attach(
+			#    EventType.MediaPlayerEndReached, self.end_callback)
 			event_manager.event_attach(
 			    EventType.MediaPlayerPositionChanged, self.pos_callback, self.mediaplayer)
 
