@@ -8,3 +8,5 @@ app.zip
 app.app
 default.json
 *.pyc
+psychometricstudy.spec
+.DS_Store

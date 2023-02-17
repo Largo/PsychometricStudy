@@ -10,7 +10,7 @@ a = Analysis(
     binaries=[],
     datas=[],
     hiddenimports=[],
-    hookspath=[],
+    hookspath=['hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -42,4 +42,10 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['icon.png'],
+)
+app = BUNDLE(
+    exe,
+    name='psychometricstudy.app',
+    icon=None,
+    bundle_identifier=None,
 )
