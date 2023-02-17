@@ -301,7 +301,9 @@ class Window (QtWidgets.QMainWindow):
 
 	def end_callback(self, event):
 		print("test")
-
+		self.mediaplayer.set_time(0)
+		self.sliderSilentValue(0)
+		# self.mediaplayer.play()
 		#self.pauseButton.hide()
 		#self.playButton.show()
 
@@ -315,16 +317,6 @@ class Window (QtWidgets.QMainWindow):
 		#self.showSplash()
 
 	def pos_callback(self, event, player):
-		# check if video has ended, if yes click stopClicked
-		if player.get_time() > player.get_length()/2:
-			if player.is_playing() == True:
-				#player.pause()
-				
-				self.pauseButton.hide()
-				self.playButton.show()
-				self.showSplash()
-				player.stop()
-				return
 		
 
 		self.updateCounter()
@@ -355,6 +347,18 @@ class Window (QtWidgets.QMainWindow):
 
 		self.prevSecond = int(playerTime/1000)
 		self.prevMin = int(playerTime/(60*1000))
+
+		# # check if video has ended, if yes click stopClicked
+		# if player.get_time() >= player.get_length():
+		# 	if player.is_playing() == True:
+		# 		#player.pause()
+				
+		# 		self.pauseButton.hide()
+		# 		self.playButton.show()
+		# 		self.showSplash()
+		# 		player.stop()
+		# 		return
+		
 
 	def setListeners(self):
 
