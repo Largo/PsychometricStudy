@@ -6,18 +6,37 @@ If you use this code, please send us a message!
 ## Installation
 
 ### Automatic
+```
 pipenv install
+```
 
 ### Manual
+```
 pip install xlsxwriter
 pip install python-vlc
 pip install PyQt5
 pip install qtawesome
 pip install pyinstaller
+```
 
 
-# How to create an .exe on windows:
+### Run from source
+```
+python app.py
+```
 
-pyinstaller --noconsole  app.py --name psychometricstudy --onefile --additional-hooks-dir hooks/ 
+# How to create an executable file:
+
+Without including VLC in the binary. Will need to have VLC installed. VLC will need to be in the path on Windows.
+
+```
+pyinstaller --noconsole  app.py --name PsychometricStudy --onefile
+```
+
+Including VLC in the binary. Will work on computers without VLC installed, but is potentially problematic
+
+```
+pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks/
+```
 
 For more information see https://realpython.com/pyinstaller-python/
