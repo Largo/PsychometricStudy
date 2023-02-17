@@ -8,6 +8,7 @@ XlsxWriter = "*"
 python-vlc = "*"
 PyQt5 = "*"
 QtAwesome = "*"
+Pillow = "*"
 
 [dev-packages]
 pyinstaller = "*"

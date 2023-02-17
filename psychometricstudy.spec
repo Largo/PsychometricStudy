@@ -46,6 +46,6 @@ exe = EXE(
 app = BUNDLE(
     exe,
     name='psychometricstudy.app',
-    icon=None,
+    icon='icon.png',
     bundle_identifier=None,
 )
