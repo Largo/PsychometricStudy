@@ -7,3 +7,4 @@ release
 app.zip
 app.app
 default.json
+*.pyc

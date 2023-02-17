@@ -18,4 +18,6 @@ pip install pyinstaller
 
 # How to create an .exe on windows:
 
-pyinstaller --noconsole  app.py
+pyinstaller --noconsole  app.py --name psychometricstudy --onefile --additional-hooks-dir hooks/ 
+
+For more information see https://realpython.com/pyinstaller-python/
