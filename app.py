@@ -1,13 +1,26 @@
 import sys
+if sys.version_info.major < 3:
+    print("This script requires Python 3 or later.")
+    sys.exit(1)
+
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QLabel
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QPushButton, QLabel, QMessageBox
 from PyQt5.QtGui import QFontDatabase, QFont
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QKeySequence
-import vlc
-from vlc import EventType
+try:
+	import vlc
+	from vlc import EventType
+except:
+	app = QApplication(sys.argv)
+	# show error message box if VLC libraries can't be loaded
+	msgBox = QMessageBox()
+	msgBox.setIcon(QMessageBox.Critical)
+	msgBox.setText("Failed to load VLC libraries.")
+	msgBox.setWindowTitle("Error")
+	sys.exit(msgBox.exec_())
 import time
 from time import gmtime, strftime
 import json
@@ -58,8 +71,6 @@ class Window (QtWidgets.QMainWindow):
 		self.resize(1200, 1000)
 		self.instance = vlc.Instance()
 		self.mediaplayer = self.instance.media_player_new()
-
-
 
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget(self.widget)
@@ -150,7 +161,10 @@ class Window (QtWidgets.QMainWindow):
 				btn.setIcon(qta.icon(button["icon"], color=fontColor))
 			if "text" in button:
 				btn.setText(button["text"])
-				btn.setFont(QFont(QFont().defaultFamily(), 21))
+				if sys.platform == "darwin":
+					btn.setFont(QFont(QFont().defaultFamily(), 67))
+				else: 
+					btn.setFont(QFont(QFont().defaultFamily(), 21))
 				btn.setStyleSheet("color: " + fontColor)
 			if "enabled" in button:
 				btn.setEnabled(button["enabled"])
@@ -224,7 +238,11 @@ class Window (QtWidgets.QMainWindow):
 		# add margin around
 		self.hotkeyLabel.setContentsMargins(10, 0, 10, 0)
 		self.hotkeyLabel.setText("Hotkeys: <b>Space</b> to play/pause, <b>Enter</b> to add marker, <b>Ctrl+S</b> to save, <b>Up</b>/<b>Down</b> to increase/decrease points")
-		self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 12))
+		
+		if sys.platform == "darwin":
+			self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 25))
+		else:
+			self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 12))
 		self.hotkeyLabel.setStyleSheet("color: " + fontColor)
 		self.vboxlayout.addWidget(self.hotkeyLabel)
 
@@ -484,7 +502,7 @@ class Window (QtWidgets.QMainWindow):
 			self.resetMetrics()
 			self.showSplash(False)
 			self.mediaplayer.play()
-
+			
 			self.playButton.hide()
 			self.pauseButton.show()
 
@@ -497,6 +515,7 @@ class Window (QtWidgets.QMainWindow):
 			self.decButton.setEnabled(True)
 			self.markerButton.setEnabled(True)
 			self.slider.setEnabled(True)
+			
 
 	def showSplash(self, show=True):
 		if show == True:
