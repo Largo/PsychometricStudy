@@ -4,7 +4,44 @@
 # does not work at the moment
 
 from PyInstaller.utils.hooks import collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_data_files
 import sys
+
+
+datas = collect_data_files('vlc')
+
+# If windows
+if sys.platform == 'win32':
+    # Find the libvlc.dll file amd add it to the binary
+    binaries = []
+    for data in datas:
+        if data[0].endswith('libvlc.dll'):
+            binaries.append(data)
+        # also add libvlccore
+        if data[0].endswith('libvlccore.dll'):
+            binaries.append(data)
+
+# If Linux
+if sys.platform == 'linux':
+    # Find the libvlc.so file amd add it to the binary
+    binaries = []
+    for data in datas:
+        if data[0].endswith('libvlc.so'):
+            binaries.append(data)
+        # also add libvlccore
+        if data[0].endswith('libvlccore.so'):
+            binaries.append(data)
+
+# If Mac OS X
+if sys.platform == 'darwin':
+    # Find the libvlc.so file amd add it to the binary
+    binaries = []
+    for data in datas:
+        if data[0].endswith('libvlc.dylib'):
+            binaries.append(data)
+        # also add libvlccore
+        if data[0].endswith('libvlccore.dylib'):
+            binaries.append(data)
 
 # binaries = collect_dynamic_libs('vlc')
 
