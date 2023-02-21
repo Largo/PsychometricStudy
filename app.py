@@ -130,20 +130,20 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "pauseButton", "icon": "fa5s.pause",
 			    "hide": True, "clicked": self.changePlayButton},
 			{"name": "backButton", "icon": "fa5s.backward",
-			    "enabled": False, "clicked": self.backButtonClicked},
+			    "enabled": False, "pressed": self.backButtonClicked, "setAutoRepeat": True},
 			{"name": "stopButton", "icon": "fa5s.stop",
 			    "enabled": False, "clicked": self.stopClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
-			    "enabled": False, "clicked": self.nextButtonClicked},
+			    "enabled": False, "pressed": self.nextButtonClicked, "setAutoRepeat": True},
 			{"name": "stretch", "type": "stretch", "factor": 1},    
 			{"name": "skipButton", "icon": "fa5s.fast-forward",
-			    "enabled": False, "clicked": self.skipButtonClicked},
+			    "enabled": False, "pressed": self.skipButtonClicked, "setAutoRepeat": False},
 			{"name": "stretch", "type": "stretch", "factor": 1},
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
-			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"]},
+			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True},
 			{"name": "counterLabel", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
-			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"]},
+			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"], "setAutoRepeat": True},
 			{"name": "markerButton", "icon": "fa5s.surprise",
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"]},
 			{"name": "saveButton", "icon": "fa5s.save",
@@ -178,6 +178,8 @@ class Window (QtWidgets.QMainWindow):
 				btn.pressed.connect(button["pressed"])
 			if "released" in button:
 				btn.released.connect(button["released"])
+			if "setAutoRepeat" in button:
+				btn.setAutoRepeat(button["setAutoRepeat"])
 
 			if "type" in button and button["type"] == "stretch":
 				self.hboxlayout.addStretch(button["factor"])
@@ -188,7 +190,10 @@ class Window (QtWidgets.QMainWindow):
 				# loop over button["hotkey"] and add a shortcut for each one
 				for hotkey in button["hotkey"]:
 					buttonShortcut = QShortcut(QKeySequence(hotkey), self)
-					buttonShortcut.setAutoRepeat(False)
+					if "setAutoRepeat" in button:
+						buttonShortcut.setAutoRepeat(button["setAutoRepeat"])
+					else:
+						buttonShortcut.setAutoRepeat(False)
 					buttonShortcut.setEnabled(True)
 					# add lamda to connect and only run handler if button is enabled
 					buttonShortcut.activated.connect(lambda btn=btn: btn.click() if btn.isEnabled() else None)
@@ -272,16 +277,18 @@ class Window (QtWidgets.QMainWindow):
 	def pauseButtonClicked(self, event):
 		if self.mediaplayer != None:
 			self.mediaplayer.pause()
+			self.pauseButton.hide()
+			self.playButton.show()
 
-	def backButtonClicked(self, event):
+	def backButtonClicked(self):
 		if self.mediaplayer != None:
 			self.mediaplayer.set_time(self.mediaplayer.get_time() - 1000)
 
-	def nextButtonClicked(self, event):
+	def nextButtonClicked(self):
 		if self.mediaplayer != None:
 			self.mediaplayer.set_time(self.mediaplayer.get_time() + 1000)
 
-	def skipButtonClicked(self, event):
+	def skipButtonClicked(self):
 		if "skipTimeInSec" in self.defaultConfig:
 			skipTimeInSec = self.defaultConfig["skipTimeInSec"]
 		else:
@@ -293,7 +300,6 @@ class Window (QtWidgets.QMainWindow):
 				self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
 
 	def releaseButton(self):
-		print("release")
 		self.locked = False
 
 	def increase(self):
@@ -341,7 +347,7 @@ class Window (QtWidgets.QMainWindow):
 
 		self.updateCounter()
 		playerTime = player.get_time()
-		print(f"pos_callback {playerTime}")
+		#print(f"pos_callback {playerTime}")
 
 		sec = int(playerTime/1000)
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
@@ -505,7 +511,8 @@ class Window (QtWidgets.QMainWindow):
 
 	def playClicked(self, event):
 		if self.mediaplayer != None:
-			self.resetMetrics()
+
+			
 			self.showSplash(False)
 			self.mediaplayer.play()
 			
@@ -548,6 +555,7 @@ class Window (QtWidgets.QMainWindow):
 			self.pauseButton.hide()
 			self.playButton.show()
 			self.showSplash()
+			self.resetMetrics()			
 
 	def loadVideo(self):
 		self.stopClicked(None)
@@ -576,6 +584,7 @@ class Window (QtWidgets.QMainWindow):
 
 			self.setListeners()
 			self.playButton.setEnabled(True)
+			self.resetMetrics()
 
 
 	def createMenu(self):
