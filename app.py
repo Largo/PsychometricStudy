@@ -185,11 +185,8 @@ class Window (QtWidgets.QMainWindow):
 				self.hboxlayout.addWidget(btn)
 
 			if "hotkey" in button:
-				#print(f"Adding hotkey for {button['name']}")
-				# print(button["hotkey"])
 				# loop over button["hotkey"] and add a shortcut for each one
 				for hotkey in button["hotkey"]:
-					print(f"Adding hotkey {hotkey} for {button['name']}")
 					buttonShortcut = QShortcut(QKeySequence(hotkey), self)
 					buttonShortcut.setAutoRepeat(False)
 					buttonShortcut.setEnabled(True)
@@ -298,18 +295,12 @@ class Window (QtWidgets.QMainWindow):
 	def releaseButton(self):
 		self.locked = False
 
-	#def flip(self):
-	#	tf = self.timeFactor()
-	#	if self.points < 10:
-	#		self.points = self.points*(-1)
-	#		self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
-
 	def increase(self):
 		self.record_zeros = True
 		tf = self.timeFactor()
 		if self.points < self.upper_slider_value:
 			self.points += 1
-			self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
+			# self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
 			self.locked = True
 			self.eta = time.time()
 
@@ -318,7 +309,7 @@ class Window (QtWidgets.QMainWindow):
 		tf = self.timeFactor()
 		if self.points > (self.lower_slider_value):
 			self.points -= 1
-			self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
+			# self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
 			self.locked = True
 			self.eta = time.time()
 
@@ -326,7 +317,6 @@ class Window (QtWidgets.QMainWindow):
 		self.stopClicked(None)
 
 	def end_callback(self, event):
-		print("test")
 		self.mediaplayer.set_position(0)
 		self.sliderSilentValue(0)
 		# initialise seconds elapsed
@@ -347,10 +337,11 @@ class Window (QtWidgets.QMainWindow):
 		#self.showSplash()
 
 	def pos_callback(self, event, player):
-		
 
 		self.updateCounter()
 		playerTime = player.get_time()
+		print(f"pos_callback {playerTime}")
+
 		sec = int(playerTime/1000)
 		min = int(playerTime/(60*1000))
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
@@ -700,7 +691,6 @@ class Window (QtWidgets.QMainWindow):
 		label.setText(f"Range: {lower_value} to {upper_value}")
 
 	def addMarker(self):
-		print("test")
 		if self.mediaplayer != None:
 			tf = self.timeFactor()
 			self.markers_list.append([int(self.mediaplayer.get_time()/tf), 1])
