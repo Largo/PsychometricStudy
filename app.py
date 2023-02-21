@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import sys
 if sys.version_info.major < 3:
     print("This script requires Python 3 or later.")
@@ -69,8 +71,8 @@ class Window (QtWidgets.QMainWindow):
 		self.setWindowTitle(app_name)
 		self.setMinimumSize(750, 600)
 		self.resize(1200, 1000)
-		self.instance = vlc.Instance()
-		self.mediaplayer = self.instance.media_player_new()
+		self.vlc_instance = vlc.Instance()
+		self.mediaplayer = self.vlc_instance.media_player_new()
 
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget(self.widget)
@@ -209,6 +211,9 @@ class Window (QtWidgets.QMainWindow):
 		# make sure that time elapsed has a minimum width that is enough to display 0:00:00
 
 		self.slider = ClickableSlider(QtCore.Qt.Horizontal)
+		self.slider.setToolTip("Position")
+		self.slider.setMinimum(0)
+		self.slider.setMaximum(10000)
 		self.slider.setEnabled(False)
 		self.slider.valueChanged.connect(self.sliderChanged)
 
@@ -257,7 +262,10 @@ class Window (QtWidgets.QMainWindow):
 		self.counterLabel.setText(str(self.points))
 
 	def sliderChanged(self, val):
-		self.mediaplayer.set_time(int(val))
+		newPosition = val/10000.0
+		if newPosition >= 1.0:
+			newPosition = 0.99999
+		self.mediaplayer.set_position(val/10000.000)
 
 	def sliderSilentValue(self, val):
 		self.slider.blockSignals(True)
@@ -319,8 +327,12 @@ class Window (QtWidgets.QMainWindow):
 
 	def end_callback(self, event):
 		print("test")
-		self.mediaplayer.set_time(0)
+		self.mediaplayer.set_position(0)
 		self.sliderSilentValue(0)
+		# initialise seconds elapsed
+		self.prevSecond = 0
+		self.prevMin = 0
+		self.record_zeros = False
 		# self.mediaplayer.play()
 		#self.pauseButton.hide()
 		#self.playButton.show()
@@ -361,7 +373,9 @@ class Window (QtWidgets.QMainWindow):
 					self.points += 1
 
 		if self.slider != None:
-			self.sliderSilentValue(int(playerTime))
+			length = player.get_length()
+			scaled_player_time = int((playerTime / length) * 10000)
+			self.sliderSilentValue(scaled_player_time)
 
 		self.prevSecond = int(playerTime/1000)
 		self.prevMin = int(playerTime/(60*1000))
@@ -382,8 +396,10 @@ class Window (QtWidgets.QMainWindow):
 
 		if self.mediaplayer != None:
 			event_manager = self.mediaplayer.event_manager()
-			#event_manager.event_attach(
-			#    EventType.MediaPlayerEndReached, self.end_callback)
+			event_manager.event_detach(EventType.MediaPlayerEndReached)
+			event_manager.event_detach(EventType.MediaPlayerPositionChanged)
+			event_manager.event_attach(
+			    EventType.MediaPlayerEndReached, self.end_callback)
 			event_manager.event_attach(
 			    EventType.MediaPlayerPositionChanged, self.pos_callback, self.mediaplayer)
 
@@ -410,17 +426,24 @@ class Window (QtWidgets.QMainWindow):
 			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
 			# self.setTheFilename()
 
-		if len(self.points_list) > 0:
+		if len(self.points_list) > 0 or len(self.markers_list) > 0:
 			for i in range(0, len(self.points_list)):
 				[y, value] = self.points_list[i]
 				temporaryList[y] = value
 			# Only take the latest value in the list
 
 			# iterate over the hash temporaryList	and get the key and value
+			sortedMarkersList = dict(sorted(self.markers_list)).items()
+			# turn sortedMarkersList which is an array with [key,value] into a list with key: value
+			sortedMarkersList = {k: v for k, v in sortedMarkersList}
+			
 			for y, value in dict(sorted(temporaryList.items())).items():
 				self.x_axis.append(y)
 				self.y_axis.append(value)
-				currentMarker = self.markers_list[y]
+				if y in sortedMarkersList:
+					currentMarker = "x" if sortedMarkersList[y] == 1 else ""
+				else:
+					currentMarker = ""
 				
 				self.markers_axis.append(currentMarker)
 
@@ -455,11 +478,11 @@ class Window (QtWidgets.QMainWindow):
 			chart.set_x_axis({'name': 'time ('+str(time)+')',
 			                 'name_font': {'size': 14, 'bold': True}, 'num_font':  {'italic': True}})
 
-			worksheet.insert_chart('C1', chart)
+			worksheet.insert_chart('D1', chart)
 			workbook.close()
 
 			QtWidgets.QMessageBox.information(self, "File Saved", "File saved at "+os.getcwd(
-			)+"\\"+str(self.excelFilename)+".xlsx", QtWidgets.QMessageBox.Yes)
+			)+"\\"+str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
 		# else:
 			# QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
@@ -490,7 +513,7 @@ class Window (QtWidgets.QMainWindow):
 			self.prevMin = 0
 
 			# init slider
-			self.slider.setRange(0, self.media.get_duration())
+			self.slider.setRange(0, 10000)
 			self.slider.setValue(0)
 			# self.totalTime.setText(str(self.media.get_duration()/1000))
 			self.totalTime.setText(str(datetime.timedelta(
@@ -557,7 +580,7 @@ class Window (QtWidgets.QMainWindow):
 		if len(path) > 0:
 			self.UNIT = self.SECOND
 
-			self.media = self.instance.media_new(str(path))
+			self.media = self.vlc_instance.media_new(str(path))
 			self.mediaplayer.set_media(self.media)	
 			self.media.parse()
 
@@ -680,7 +703,7 @@ class Window (QtWidgets.QMainWindow):
 		print("test")
 		if self.mediaplayer != None:
 			tf = self.timeFactor()
-			self.markers_list.append([int(self.mediaplayer.get_time()/tf), True])
+			self.markers_list.append([int(self.mediaplayer.get_time()/tf), 1])
 
 
 
@@ -688,7 +711,8 @@ def crash_handler(exctype, value, traceback):
     # Handle the exception
 	print("An error occurred:", value)
 	# Print the line where the error occurred
-	tb_list = traceback.extract_tb(traceback)
+	exc_traceback = sys.exc_info()
+	tb_list = traceback.extract_tb(exc_traceback)
 	for tb in tb_list:
 		filename, line_num, func_name, source_code = tb
 		print(f"File {filename}, line {line_num}, in {func_name}")
@@ -700,6 +724,7 @@ if __name__=='__main__':
 	app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 	window = Window()
 	window.show()
-
-	#app.exec_()
-	sys.exit (app.exec_())
+	sys.exit(app.exec_())
+	# release memory from libvlc
+	#window.mediaplayer.release()
+	#window.vlc_instance.release()
