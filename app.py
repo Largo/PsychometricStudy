@@ -596,9 +596,10 @@ class Window (QtWidgets.QMainWindow):
 
 		self.initDialog()
 
+		editMenu = menubar.addMenu('&Edit')
 		set_range_action = QtWidgets.QAction("&Set Range", self)
 		set_range_action.triggered.connect(self.showDialog)
-		menubar.addAction(set_range_action)
+		editMenu.addAction(set_range_action)
 
 		# settingsMenu = menubar.addMenu('&Settings')
 
