@@ -293,6 +293,7 @@ class Window (QtWidgets.QMainWindow):
 				self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
 
 	def releaseButton(self):
+		print("release")
 		self.locked = False
 
 	def increase(self):
@@ -343,18 +344,17 @@ class Window (QtWidgets.QMainWindow):
 		print(f"pos_callback {playerTime}")
 
 		sec = int(playerTime/1000)
-		min = int(playerTime/(60*1000))
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 
-		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and len(self.points_list) > 0:
+		if (sec != self.prevSecond) and len(self.points_list) > 0:
 			tf = self.timeFactor()
 			self.points_list.append([int(playerTime/tf), self.points])
 
-		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and self.locked == True:
+		if (sec != self.prevSecond):
 			tf = self.timeFactor()
 			self.points_list.append([int(playerTime/tf), self.points])
 
-		if (min != self.prevMin if self.UNIT == self.MINUTE else sec != self.prevSecond) and self.locked == False:
+		if (sec != self.prevSecond) and self.locked == False:
 			tf = self.timeFactor()
 			if (time.time()-self.eta) >= 2:
 				if self.points > 0:
@@ -461,10 +461,6 @@ class Window (QtWidgets.QMainWindow):
 			chart.set_y_axis({'name': 'response', 'name_font': {
 			                 'size': 14, 'bold': True}, 'num_font':  {'italic': True}})
 			time = "sec"
-			if self.UNIT == self.MINUTE:
-				time = "min"
-			if self.UNIT == self.MS:
-				time = "ms"
 
 			chart.set_x_axis({'name': 'time ('+str(time)+')',
 			                 'name_font': {'size': 14, 'bold': True}, 'num_font':  {'italic': True}})
@@ -480,12 +476,8 @@ class Window (QtWidgets.QMainWindow):
 
 	def timeFactor(self):
 		timex = 1
-		if self.UNIT == self.MINUTE:
-			timex = 60*1000
 		if self.UNIT == self.SECOND:
 			timex = 1000
-		if self.UNIT == self.MS:
-			timex = 1
 		return timex
 
 	def resetMetrics(self):
