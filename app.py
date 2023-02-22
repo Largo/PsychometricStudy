@@ -73,6 +73,7 @@ class Window (QtWidgets.QMainWindow):
 		self.resize(1200, 1000)
 		self.vlc_instance = vlc.Instance()
 		self.mediaplayer = self.vlc_instance.media_player_new()
+		self.media = None
 
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget(self.widget)
