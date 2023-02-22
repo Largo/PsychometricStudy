@@ -39,4 +39,10 @@ Including VLC in the binary. Will work on computers without VLC installed, but i
 pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks/ --icon icon.png --clean
 ```
 
+OSX:
+
+```
+~/Library/Python/3.8/bin/pyinstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean
+```
+
 For more information see https://realpython.com/pyinstaller-python/

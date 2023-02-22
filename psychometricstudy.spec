@@ -49,3 +49,9 @@ coll = COLLECT(
     upx_exclude=[],
     name='PsychometricStudy',
 )
+app = BUNDLE(
+    coll,
+    name='PsychometricStudy.app',
+    icon='icon.png',
+    bundle_identifier=None,
+)
