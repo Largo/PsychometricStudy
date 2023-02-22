@@ -135,15 +135,17 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.stopClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "pressed": self.nextButtonClicked, "setAutoRepeat": True},
-			{"name": "stretch", "type": "stretch", "factor": 1},    
-			{"name": "skipButton", "icon": "fa5s.fast-forward",
-			    "enabled": False, "pressed": self.skipButtonClicked, "setAutoRepeat": False},
-			{"name": "stretch", "type": "stretch", "factor": 1},
+						{"name": "stretch", "type": "stretch", "factor": 1},
+
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
 			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True},
 			{"name": "counterLabel", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
 			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"], "setAutoRepeat": True},
+			{"name": "stretch", "type": "stretch", "factor": 1},    
+			{"name": "skipButton", "icon": "fa5s.fast-forward",
+			    "enabled": False, "pressed": self.skipButtonClicked, "setAutoRepeat": False},
+		
 			{"name": "markerButton", "icon": "fa5s.surprise",
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"]},
 			{"name": "saveButton", "icon": "fa5s.save",
@@ -244,7 +246,7 @@ class Window (QtWidgets.QMainWindow):
 		self.hotkeyLabel.setWordWrap(True)
 		# add margin around
 		self.hotkeyLabel.setContentsMargins(10, 0, 10, 0)
-		self.hotkeyLabel.setText("Hotkeys: <b>Space</b> to play/pause, <b>Enter</b> to add marker, <b>Ctrl+S</b> to save, <b>Up</b>/<b>Down</b> to increase/decrease points")
+		self.hotkeyLabel.setText("Hotkeys:&nbsp;<b>Space</b> to play/pause,&nbsp;<b>Enter</b> to add marker,&nbsp;<b>Ctrl+S</b> to save,&nbsp;<b>Up</b>/<b>Down</b> to increase/decrease points")
 		
 		if sys.platform == "darwin":
 			self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 25))
@@ -360,15 +362,6 @@ class Window (QtWidgets.QMainWindow):
 			tf = self.timeFactor()
 			self.points_list.append([int(playerTime/tf), self.points])
 
-		if (sec != self.prevSecond) and self.locked == False:
-			tf = self.timeFactor()
-			if (time.time()-self.eta) >= 2:
-				if self.points > 0:
-					self.points -= 1
-
-				if self.points < 0:
-					self.points += 1
-
 		if self.slider != None:
 			length = player.get_length()
 			scaled_player_time = int((playerTime / length) * 10000)
@@ -376,17 +369,6 @@ class Window (QtWidgets.QMainWindow):
 
 		self.prevSecond = int(playerTime/1000)
 		self.prevMin = int(playerTime/(60*1000))
-
-		# # check if video has ended, if yes click stopClicked
-		# if player.get_time() >= player.get_length():
-		# 	if player.is_playing() == True:
-		# 		#player.pause()
-				
-		# 		self.pauseButton.hide()
-		# 		self.playButton.show()
-		# 		self.showSplash()
-		# 		player.stop()
-		# 		return
 		
 
 	def setListeners(self):
@@ -438,7 +420,7 @@ class Window (QtWidgets.QMainWindow):
 				self.x_axis.append(y)
 				self.y_axis.append(value)
 				if y in sortedMarkersList:
-					currentMarker = "x" if sortedMarkersList[y] == 1 else ""
+					currentMarker = "1" if sortedMarkersList[y] == 1 else ""
 				else:
 					currentMarker = ""
 				
