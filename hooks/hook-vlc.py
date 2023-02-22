@@ -6,20 +6,26 @@
 from PyInstaller.utils.hooks import collect_dynamic_libs
 from PyInstaller.utils.hooks import collect_data_files
 import sys
+import vlc
+from vlc import EventType
+
+vlc.Instance().media_player_new()
 
 
-datas = collect_data_files('vlc')
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+
+datas = []
 
 # If windows
 if sys.platform == 'win32':
-    # Find the libvlc.dll file amd add it to the binary
-    binaries = []
-    for data in datas:
-        if data[0].endswith('libvlc.dll'):
-            binaries.append(data)
-        # also add libvlccore
-        if data[0].endswith('libvlccore.dll'):
-            binaries.append(data)
+    print("test")
+    # # Find the libvlc.dll file amd add it to the binary
+    datas += [
+        ('C:\\Program Files\\VideoLAN\\VLC\\libvlc.dll', '.'),
+        ('C:\\Program Files\\VideoLAN\\VLC\\libvlccore.dll', '.'),
+        ('C:\\Program Files\\VideoLAN\\VLC\\plugins', 'plugins')
+    ]
 
 # If Linux
 if sys.platform == 'linux':
