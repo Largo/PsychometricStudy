@@ -131,24 +131,24 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "pauseButton", "icon": "fa5s.pause",
 			    "hide": True, "clicked": self.changePlayButton},
 			{"name": "backButton", "icon": "fa5s.backward",
-			    "enabled": False, "pressed": self.backButtonClicked, "setAutoRepeat": True},
+			    "enabled": False, "pressed": self.backButtonClicked, "hotkey": ["left"], "setAutoRepeat": True},
 			{"name": "stopButton", "icon": "fa5s.stop",
 			    "enabled": False, "clicked": self.stopClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
-			    "enabled": False, "pressed": self.nextButtonClicked, "setAutoRepeat": True},
+			    "enabled": False, "pressed": self.nextButtonClicked, "hotkey": ["right"], "setAutoRepeat": True},
 						{"name": "stretch", "type": "stretch", "factor": 1},
 
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
-			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True},
+			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True, "color": "#76BA1B" }, # green color
 			{"name": "counterLabel", "text": "0"},
-			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False,
-			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"], "setAutoRepeat": True},
+			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False, 
+			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"], "setAutoRepeat": True, "color": "#FD3F46" }, # red color
 			{"name": "stretch", "type": "stretch", "factor": 1},    
 			{"name": "skipButton", "icon": "fa5s.fast-forward",
 			    "enabled": False, "pressed": self.skipButtonClicked, "setAutoRepeat": False},
 		
 			{"name": "markerButton", "icon": "fa5s.surprise",
-			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"]},
+			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"], "color": "#F5BD0A"},
 			{"name": "saveButton", "icon": "fa5s.save",
 			    "enabled": False, "clicked": self.save},
 		]
@@ -199,9 +199,16 @@ class Window (QtWidgets.QMainWindow):
 						buttonShortcut.setAutoRepeat(False)
 					buttonShortcut.setEnabled(True)
 					# add lamda to connect and only run handler if button is enabled
-					buttonShortcut.activated.connect(lambda btn=btn: btn.click() if btn.isEnabled() else None)
+					#buttonShortcut.activated.connect(lambda btn=btn: btn.click() if btn.isEnabled() else None)
 					# add the shortcut to the list of shortcuts
 					self.shortcuts.append(buttonShortcut)
+					# visibly press the button when the shortcut is pressed
+					buttonShortcut.activated.connect(lambda btn=btn: btn.animateClick(100) if btn.isEnabled() else None)
+			
+			if "color" in button:
+				btn.setStyleSheet("color: " + button["color"])
+			else:
+				btn.setStyleSheet("color: " + fontColor)
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
