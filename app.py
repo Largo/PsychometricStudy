@@ -120,6 +120,8 @@ class Window (QtWidgets.QMainWindow):
 		self.videoframe.hide()
 
 		self.hboxlayout = QtWidgets.QHBoxLayout()
+		# add some margins on the left and right
+		self.hboxlayout.setContentsMargins(10, 10, 10, 10)
 
 		self.shortcuts = []
 
@@ -136,17 +138,18 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.stopClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "pressed": self.nextButtonClicked, "hotkey": ["right"], "setAutoRepeat": True},
-						{"name": "stretch", "type": "stretch", "factor": 1},
+			{"name": "stretch", "type": "stretch", "factor": 1},
 
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
 			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True, "color": "#76BA1B" }, # green color
-			{"name": "counterLabel", "text": "0"},
+			{"name": "counterLabel", "type": "button", "text": "0"},
 			{"name": "decButton", "icon": "fa5s.arrow-circle-down", "enabled": False, 
 			    "pressed": self.decrease, "released": self.releaseButton, "hotkey": ["Down"], "setAutoRepeat": True, "color": "#FD3F46" }, # red color
-			{"name": "stretch", "type": "stretch", "factor": 1},    
+			{"name": "stretch", "type": "stretch", "factor": 1},
+			{"name": "hiddenButton", "type": "spacer"},
 			{"name": "skipButton", "icon": "fa5s.fast-forward",
 			    "enabled": False, "pressed": self.skipButtonClicked, "setAutoRepeat": False},
-		
+			{"name": "stretch", "type": "stretch", "factor": 1},
 			{"name": "markerButton", "icon": "fa5s.surprise",
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"], "color": "#F5BD0A"},
 			{"name": "saveButton", "icon": "fa5s.save",
@@ -154,7 +157,6 @@ class Window (QtWidgets.QMainWindow):
 		]
 
 		for button in buttons:
-
 			if "type" not in button or button["type"] == "button":
 				btn = QtWidgets.QPushButton('')
 				setattr(self, button["name"], btn)
@@ -162,11 +164,18 @@ class Window (QtWidgets.QMainWindow):
 				# set focus policy to no focus
 				btn.setFocusPolicy(QtCore.Qt.NoFocus)
 
+			if "type" in button and button["type"] == "spacer":
+				btn = QtWidgets.QSpacerItem(90, 90, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+				
 			if "icon" in button:
 				if "color" in button:
 					btn.setIcon(qta.icon(button["icon"], color=button["color"]))
 				else:
 					btn.setIcon(qta.icon(button["icon"], color=fontColor))
+			elif "type" not in button or button["type"] == "button":
+				# set width and height to take the same space as the icon plus the padding
+				btn.setFixedSize(90, 90)
+
 			if "text" in button:
 				btn.setText(button["text"])
 				if sys.platform == "darwin":
@@ -188,29 +197,31 @@ class Window (QtWidgets.QMainWindow):
 
 			if "type" in button and button["type"] == "stretch":
 				self.hboxlayout.addStretch(button["factor"])
+			elif "type" in button and button["type"] == "spacer":
+				self.hboxlayout.addItem(btn)
 			else:
 				self.hboxlayout.addWidget(btn)
 
-			if "hotkey" in button:
-				# loop over button["hotkey"] and add a shortcut for each one
-				for hotkey in button["hotkey"]:
-					buttonShortcut = QShortcut(QKeySequence(hotkey), self)
-					if "setAutoRepeat" in button:
-						buttonShortcut.setAutoRepeat(button["setAutoRepeat"])
-					else:
-						buttonShortcut.setAutoRepeat(False)
-					buttonShortcut.setEnabled(True)
-					# add lamda to connect and only run handler if button is enabled
-					#buttonShortcut.activated.connect(lambda btn=btn: btn.click() if btn.isEnabled() else None)
-					# add the shortcut to the list of shortcuts
-					self.shortcuts.append(buttonShortcut)
-					# visibly press the button when the shortcut is pressed
-					buttonShortcut.activated.connect(lambda btn=btn: btn.animateClick(100) if btn.isEnabled() else None)
+			if "type" not in button or button["type"] == "button":
+				if "hotkey" in button:
+					# loop over button["hotkey"] and add a shortcut for each one
+					for hotkey in button["hotkey"]:
+						buttonShortcut = QShortcut(QKeySequence(hotkey), self)
+						if "setAutoRepeat" in button:
+							buttonShortcut.setAutoRepeat(button["setAutoRepeat"])
+						else:
+							buttonShortcut.setAutoRepeat(False)
+						buttonShortcut.setEnabled(True)
+						# add lamda to connect and only run handler if button is enabled and visibily press the button
+						buttonShortcut.activated.connect(lambda btn=btn: btn.animateClick(100) if btn.isEnabled() else None)
+						# add the shortcut to the list of shortcuts
+						self.shortcuts.append(buttonShortcut)
 			
-			if "color" in button:
-				btn.setStyleSheet("color: " + button["color"])
-			else:
-				btn.setStyleSheet("color: " + fontColor)
+			
+				if "color" in button:
+					btn.setStyleSheet("color: " + button["color"])
+				else:
+					btn.setStyleSheet("color: " + fontColor)
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
