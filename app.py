@@ -368,6 +368,16 @@ class Window (QtWidgets.QMainWindow):
 			scaled_player_time = int((playerTime / length) * 10000)
 			self.sliderSilentValue(scaled_player_time)
 
+		if "autoReturnRatingsToZero" in self.defaultConfig and self.defaultConfig["autoReturnRatingsToZero"] == True:
+			if (sec != self.prevSecond) and self.locked == False:
+				tf = self.timeFactor()
+				if (time.time()-self.eta) >= 2:
+					if self.points > 0:
+						self.points -= 1
+
+					if self.points < 0:
+						self.points += 1
+
 		self.prevSecond = int(playerTime/1000)
 		self.prevMin = int(playerTime/(60*1000))
 		

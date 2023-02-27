@@ -4,5 +4,6 @@
     "defaultExcelPath": "/home/andi/Downloads/test.xlsx",
     "lowerSliderValue": -5,
     "upperSliderValue": 5,
-    "skipTimeInSec": 60
+    "skipTimeInSec": 60,
+    "autoReturnRatingsToZero": false
 }
