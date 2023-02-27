@@ -432,8 +432,8 @@ class Window (QtWidgets.QMainWindow):
 		temporaryList = {}
 
 		if self.excelFilename is None:
-			self.excelFilename = os.path.basename(
-			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
+			self.excelFilename = os.getcwd() + os.sep + os.path.basename(
+			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime()) + ".xlsx"
 			# self.setTheFilename()
 
 		if len(self.points_list) > 0 or len(self.markers_list) > 0:
@@ -457,7 +457,7 @@ class Window (QtWidgets.QMainWindow):
 				
 				self.markers_axis.append(currentMarker)
 
-			workbook = xlsxwriter.Workbook(self.excelFilename)  # '.xlsx'
+			workbook = xlsxwriter.Workbook(self.excelFilename)
 			worksheet = workbook.add_worksheet()
 
 			# chart
@@ -487,8 +487,7 @@ class Window (QtWidgets.QMainWindow):
 			worksheet.insert_chart('D1', chart)
 			workbook.close()
 
-			QtWidgets.QMessageBox.information(self, "File Saved", "File saved at "+os.getcwd(
-			)+"\\"+str(self.excelFilename), QtWidgets.QMessageBox.Yes)
+			QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
 		# else:
 			# QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
