@@ -163,14 +163,16 @@ class Window (QtWidgets.QMainWindow):
 				btn.setFocusPolicy(QtCore.Qt.NoFocus)
 
 			if "icon" in button:
-				btn.setIcon(qta.icon(button["icon"], color=fontColor))
+				if "color" in button:
+					btn.setIcon(qta.icon(button["icon"], color=button["color"]))
+				else:
+					btn.setIcon(qta.icon(button["icon"], color=fontColor))
 			if "text" in button:
 				btn.setText(button["text"])
 				if sys.platform == "darwin":
 					btn.setFont(QFont(QFont().defaultFamily(), 67))
 				else: 
 					btn.setFont(QFont(QFont().defaultFamily(), 21))
-				btn.setStyleSheet("color: " + fontColor)
 			if "enabled" in button:
 				btn.setEnabled(button["enabled"])
 			if "hide" in button:
@@ -611,12 +613,23 @@ class Window (QtWidgets.QMainWindow):
 
 		self.initDialog()
 
-		editMenu = menubar.addMenu('&Edit')
+		settingsMenu = menubar.addMenu('&Settings')
 		set_range_action = QtWidgets.QAction("&Set Range", self)
 		set_range_action.triggered.connect(self.showDialog)
-		editMenu.addAction(set_range_action)
+		settingsMenu.addAction(set_range_action)
 
-		# settingsMenu = menubar.addMenu('&Settings')
+		# Help Menu
+		helpMenu = menubar.addMenu('&Help')
+		aboutAction = QtWidgets.QAction("&About", self)
+
+		# add a menu item with information about used libraries
+		licensesAction = QtWidgets.QAction("&Licenses", self)
+		licensesAction.triggered.connect(self.showLicenses)
+		helpMenu.addAction(licensesAction)
+
+		aboutAction.triggered.connect(self.showAbout)
+		helpMenu.addAction(aboutAction)
+
 
 
 	def initDialog(self):
@@ -696,7 +709,76 @@ class Window (QtWidgets.QMainWindow):
 			tf = self.timeFactor()
 			self.markers_list.append([int(self.mediaplayer.get_time()/tf), 1])
 
+	def showAbout(self):
+		about_text = """This software was commissioned by Nathan Ducker.
+		We kindly request that you cite the applicable paper when using
+		this software for your research or publication purposes.
 
+		DUCKER, N.T. (2022), Bridging the Gap Between Willingness to Communicate and Learner Talk. 
+		The Modern Language Journal, 106: 216-244. https://doi.org/10.1111/modl.12764
+		DUCKER, N.T. (2021), Protecting and enhancing willingness to communicate
+		with idiodynamic peer-peer strategy sharing.
+		System, 103, 102634 https://doi.org/10.1016/j.system.2021.102634
+
+		Nathan Ducker
+		Assistant Professor
+		Faculty of Humanities
+		Miyazaki Municipal University
+		Funatsuka 1-1-2
+		Miyazaki City
+		Miyazaki Prefecture
+		880-8520
+		Japan
+		+ 81-985-20-4817
+		
+		Nathan Ducker is an Assistant Professor at Miyazaki Municipal University where
+		he teaches content classes in intercultural communication and multicultural
+		policy. He is a PhD candidate at Aston University, where he studies willingness to
+		communicate in the Japanese context. 
+		He can be contacted at nathanducker@gmail.com"""
+
+
+		# Make a window and add the about text
+		about_window = QtWidgets.QDialog(self)
+		about_window.setWindowTitle("About")
+		about_window.setWindowModality(Qt.ApplicationModal)
+		about_window.resize(1200, 1100)
+		# about_window.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
+		# add teh text
+		about_texte = QtWidgets.QTextEdit()
+		about_texte.setText(about_text)
+		about_texte.setReadOnly(True)
+		about_texte.setLineWrapColumnOrWidth(600)
+		about_texte.setTabStopWidth(2)
+		about_texte.setTabChangesFocus(True)
+		about_texte.setAcceptRichText(False)
+		#about_texte.setOpenExternalLinks(True)
+		#about_texte.setOpenLinks(True)
+
+		# add a button to close the window
+		about_button = QtWidgets.QPushButton("Close", about_window)
+		about_button.clicked.connect(about_window.close)
+		# add the button to the layout
+		about_layout = QtWidgets.QVBoxLayout(about_window)
+		about_layout.addWidget(about_texte)
+		about_layout.addWidget(about_button)
+
+
+		# show the window
+		about_window.exec_()
+		
+	def showLicenses(self):
+		about_text = "This software is copyrighted by Nathan Ducker. \n"	
+		about_text += "This software was created by: \n"
+		about_text += "Nathan Ducker, Andi Idogawa \n"
+		about_text += "This software uses the following libraries:" + "\n"
+		about_text += "Python " + sys.version + "\n"
+		about_text += "PyQt " + QtCore.PYQT_VERSION_STR + "\n"
+		about_text += "XLSXWriter " + xlsxwriter.__version__ + "\n"
+		about_text += "The Font Awesome and Elusive Icons fonts are licensed under the SIL Open Font License. \n"
+		about_text += "QtAwesome Copyright © 2015–2022 Spyder Project Contributors " + qta.__version__ + "\n"
+		about_text += "VLC " + vlc.__version__ + "\n"
+		QtWidgets.QMessageBox.about(self, "About", about_text)
 
 def crash_handler(exctype, value, traceback):
     # Handle the exception
