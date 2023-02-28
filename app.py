@@ -734,7 +734,7 @@ class Window (QtWidgets.QMainWindow):
 		about_text += "PyQt " + QtCore.PYQT_VERSION_STR + "\n"
 		about_text += "XLSXWriter " + xlsxwriter.__version__ + "\n"
 		about_text += "The Font Awesome and Elusive Icons fonts are licensed under the SIL Open Font License. \n"
-		about_text += "QtAwesome Copyright © 2015–2022 Spyder Project Contributors " + qtawesome.__version__ + "\n"
+		about_text += "QtAwesome Copyright © 2015-2022 Spyder Project Contributors " + qtawesome.__version__ + "\n"
 		about_text += "VLC " + vlc.__version__ + "\n"
 		QtWidgets.QMessageBox.about(self, "About", about_text)
 
@@ -756,6 +756,3 @@ if __name__=='__main__':
 	window = Window()
 	window.show()
 	sys.exit(app.exec_())
-	# release memory from libvlc
-	#window.mediaplayer.release()
-	#window.vlc_instance.release()
