@@ -51,7 +51,6 @@ class Window (QtWidgets.QMainWindow):
 	MS = 2
 	UNIT = 2
 
-	record_zeros = False
 	eta = 0  # elapsed time for counter
 
 	def __init__(self):
@@ -85,19 +84,6 @@ class Window (QtWidgets.QMainWindow):
 		if "defaultExcelPath" in self.defaultConfig:
 			self.excelFilename = self.defaultConfig["defaultExcelPath"]
 
-
-		self.splashScreen = QtWidgets.QFrame()
-		self.splashScreen.setStyleSheet(
-		    "QFrame{background: black url(splash.png);background-repeat: no-repeat;background-position: center;}")
-		# self.palette = self.splashScreen.palette()
-		# self.palette.setColor (QtGui.QPalette.Window,QtGui.QColor(0,0,0))
-		# self.palette.setBrush (QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap("splash.png")))
-		# self.splashScreen.setPalette(self.palette)
-		self.splashScreen.setAutoFillBackground(True)
-		self.splashScreen.sizePolicy = QtWidgets.QSizePolicy(
-		    QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-		self.splashScreen.setSizePolicy(self.splashScreen.sizePolicy)
-
 		self.videoframe = QtWidgets.QFrame()
 		self.palette = self.videoframe.palette()
 		self.palette.setColor(QtGui.QPalette.Window, QtGui.QColor(0, 0, 0))
@@ -106,7 +92,6 @@ class Window (QtWidgets.QMainWindow):
 		self.videoframe.sizePolicy = QtWidgets.QSizePolicy(
 		    QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 		self.videoframe.setSizePolicy(self.videoframe.sizePolicy)
-		self.videoframe.hide()
 
 		self.hboxlayout = QtWidgets.QHBoxLayout()
 		# add some margins on the left and right
@@ -128,7 +113,6 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "pressed": self.nextButtonClicked, "hotkey": ["right"], "setAutoRepeat": True},
 			{"name": "stretch", "type": "stretch", "factor": 1},
-
 			{"name": "incButton", "icon": "fa5s.arrow-circle-up", "enabled": False,
 			    "pressed": self.increase, "released": self.releaseButton, "hotkey": ["Up"], "setAutoRepeat": True, "color": "#76BA1B" }, # green color
 			{"name": "counterLabel", "type": "button", "text": "0"},
@@ -205,8 +189,6 @@ class Window (QtWidgets.QMainWindow):
 						buttonShortcut.activated.connect(lambda btn=btn: btn.animateClick(100) if btn.isEnabled() else None)
 						# add the shortcut to the list of shortcuts
 						self.shortcuts.append(buttonShortcut)
-			
-			
 				if "color" in button:
 					btn.setStyleSheet("color: " + button["color"])
 				else:
@@ -214,15 +196,11 @@ class Window (QtWidgets.QMainWindow):
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
-		self.vboxlayout.addWidget(self.splashScreen)
 		self.vboxlayout.addWidget(self.videoframe)
 
-		# qslider here
 		hbox = QtWidgets.QHBoxLayout()
 		hbox.setContentsMargins(10, 0, 10, 0)
 		self.timeElapsed = QtWidgets.QLabel("0:00:00")
-
-		# make sure that time elapsed has a minimum width that is enough to display 0:00:00
 
 		self.slider = ClickableSlider(QtCore.Qt.Horizontal)
 		self.slider.setToolTip("Position")
@@ -231,22 +209,16 @@ class Window (QtWidgets.QMainWindow):
 		self.slider.setEnabled(False)
 		self.slider.valueChanged.connect(self.sliderChanged)
 
-		# call self.sliderClicked when slider is clicked
-		#self.slider.actionTriggered.connect(self.sliderClicked)
-
 		self.totalTime = QtWidgets.QLabel("0:00:00")
 		self.totalTime.setMinimumWidth(105)
+		# make sure that time elapsed has a minimum width that is enough to display 0:00:00
 		self.timeElapsed.setMinimumWidth(105)	
-
 
 		hbox.addWidget(self.timeElapsed)
 		hbox.addWidget(self.slider)
-
 		hbox.addWidget(self.totalTime)
 
-		# self.vboxlayout.addWidget (self.slider)
 		self.vboxlayout.addLayout(hbox)
-
 		self.vboxlayout.addLayout(self.hboxlayout)
 		self.widget.setLayout(self.vboxlayout)
 
@@ -315,20 +287,16 @@ class Window (QtWidgets.QMainWindow):
 		self.locked = False
 
 	def increase(self):
-		self.record_zeros = True
 		tf = self.timeFactor()
 		if self.points < self.upper_slider_value:
 			self.points += 1
-			# self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
 			self.locked = True
 			self.eta = time.time()
 
 	def decrease(self):
-		self.record_zeros = True
 		tf = self.timeFactor()
 		if self.points > (self.lower_slider_value):
 			self.points -= 1
-			# self.points_list.append([int(self.mediaplayer.get_time()/tf), self.points])
 			self.locked = True
 			self.eta = time.time()
 
@@ -341,25 +309,10 @@ class Window (QtWidgets.QMainWindow):
 		# initialise seconds elapsed
 		self.prevSecond = 0
 		self.prevMin = 0
-		self.record_zeros = False
-		# self.mediaplayer.play()
-		#self.pauseButton.hide()
-		#self.playButton.show()
-
-		
-
-		#self.saveButton.setEnabled(True)
-		#self.incButton.setEnabled(False)
-		#self.decButton.setEnabled(False)
-		#self.markerButton.setEnabled(False)
-
-		#self.showSplash()
 
 	def pos_callback(self, event, player):
-
 		self.updateCounter()
 		playerTime = player.get_time()
-		#print(f"pos_callback {playerTime}")
 
 		sec = int(playerTime/1000)
 		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
@@ -403,11 +356,8 @@ class Window (QtWidgets.QMainWindow):
 			    EventType.MediaPlayerPositionChanged, self.pos_callback, self.mediaplayer)
 
 	def setTheFilename(self):
-		# QtWidgets.QFileDialog.getOpenFileName(self, "Load Video File", '', "video files (*.*)")
-		# self.excelFilename, _ = str(QtWidgets.QFileDialog.getSaveFileName(self, "Save Excel File", '', "video files (*.*)")[0])
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
 		    None, 'Save File', '', 'Excel Files (*.xlsx);;All Files (*)')[0]
-		# self.excelFilename = os.path.basename(self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime())
 
 	def saveAs(self, event):
 		self.setTheFilename()
@@ -423,7 +373,6 @@ class Window (QtWidgets.QMainWindow):
 		if self.excelFilename is None:
 			self.excelFilename = os.getcwd() + os.sep + os.path.basename(
 			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime()) + ".xlsx"
-			# self.setTheFilename()
 
 		if len(self.points_list) > 0 or len(self.markers_list) > 0:
 			for i in range(0, len(self.points_list)):
@@ -523,7 +472,6 @@ class Window (QtWidgets.QMainWindow):
 	def resetMetrics(self):
 		if self.media != None:
 			tf = self.timeFactor()
-			# TODO: make sure this is correct
 			duration = int(self.media.get_duration() / tf)
 			self.x_axis = [x for x in range(0, duration+1)]
 			self.y_axis = [0 for x in range(0, duration+1)]
@@ -538,16 +486,12 @@ class Window (QtWidgets.QMainWindow):
 			# init slider
 			self.slider.setRange(0, 10000)
 			self.slider.setValue(0)
-			# self.totalTime.setText(str(self.media.get_duration()/1000))
 			self.totalTime.setText(str(datetime.timedelta(
 			    seconds=int(self.media.get_duration()/1000))))
 			self.record_zeros = False
 
 	def playClicked(self, event):
 		if self.mediaplayer != None:
-
-			
-			self.showSplash(False)
 			self.mediaplayer.play()
 			
 			self.playButton.hide()
@@ -562,33 +506,19 @@ class Window (QtWidgets.QMainWindow):
 			self.decButton.setEnabled(True)
 			self.markerButton.setEnabled(True)
 			self.slider.setEnabled(True)
-			
-
-	def showSplash(self, show=True):
-		if show == True:
-			self.videoframe.hide()
-			self.splashScreen.show()
-		else:
-			self.videoframe.show()
-			self.splashScreen.hide()
 
 	def changePlayButton(self, event):
 		# if the video is playing, change the button to pause
 		if self.mediaplayer.is_playing():
 			self.pauseButtonClicked(None)
-			#self.pauseButton.show()
-			#self.playButton.hide()
 		else:
 			self.playClicked(None)
-			#self.pauseButton.hide()
-			#self.playButton.show()
 
 	def stopClicked(self, event):
 		if self.mediaplayer != None:
 			self.mediaplayer.stop()
 			self.pauseButton.hide()
 			self.playButton.show()
-			self.showSplash()
 			self.resetMetrics()			
 
 	def loadVideo(self):
@@ -661,8 +591,6 @@ class Window (QtWidgets.QMainWindow):
 
 		aboutAction.triggered.connect(self.showAbout)
 		helpMenu.addAction(aboutAction)
-
-
 
 	def initDialog(self):
 		self.lower_slider_value = -10
@@ -773,14 +701,11 @@ class Window (QtWidgets.QMainWindow):
 		communicate in the Japanese context. 
 		He can be contacted at nathanducker@gmail.com"""
 
-
 		# Make a window and add the about text
 		about_window = QtWidgets.QDialog(self)
 		about_window.setWindowTitle("About")
 		about_window.setWindowModality(Qt.ApplicationModal)
 		about_window.resize(1200, 1100)
-		# about_window.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
-		# add teh text
 		about_texte = QtWidgets.QTextEdit()
 		about_texte.setText(about_text)
 		about_texte.setReadOnly(True)
@@ -788,8 +713,6 @@ class Window (QtWidgets.QMainWindow):
 		about_texte.setTabStopWidth(2)
 		about_texte.setTabChangesFocus(True)
 		about_texte.setAcceptRichText(False)
-		#about_texte.setOpenExternalLinks(True)
-		#about_texte.setOpenLinks(True)
 
 		# add a button to close the window
 		about_button = QPushButton("Close", about_window)
@@ -798,7 +721,6 @@ class Window (QtWidgets.QMainWindow):
 		about_layout = QtWidgets.QVBoxLayout(about_window)
 		about_layout.addWidget(about_texte)
 		about_layout.addWidget(about_button)
-
 
 		# show the window
 		about_window.exec_()
