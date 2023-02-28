@@ -46,3 +46,8 @@ OSX:
 ```
 
 For more information see https://realpython.com/pyinstaller-python/
+
+
+## Further Reading on Python Libraries
+- https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
+- https://xlsxwriter.readthedocs.io/chart.html

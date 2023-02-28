@@ -5,11 +5,11 @@ if sys.version_info.major < 3:
     print("This script requires Python 3 or later.")
     sys.exit(1)
 
-import os
+import os, subprocess, json, xlsxwriter, qtawesome, shutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QPushButton, QLabel, QMessageBox
-from PyQt5.QtGui import QFontDatabase, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QKeySequence
 try:
@@ -23,18 +23,8 @@ except:
 	msgBox.setText("Failed to load VLC libraries.")
 	msgBox.setWindowTitle("Error")
 	sys.exit(msgBox.exec_())
-import time
+import time, datetime
 from time import gmtime, strftime
-import json
-
-import threading
-
-# https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
-import qtawesome as qta
-
-import xlsxwriter
-
-import datetime
 
 app_name = "Psychometric Study"
 
@@ -46,7 +36,6 @@ class ClickableSlider(QtWidgets.QSlider):
             # Set the slider position to the clicked value
             self.setValue(int(click_value))
         super().mousePressEvent(event)
-
 
 class Window (QtWidgets.QMainWindow):
 	points = 0
@@ -158,7 +147,7 @@ class Window (QtWidgets.QMainWindow):
 
 		for button in buttons:
 			if "type" not in button or button["type"] == "button":
-				btn = QtWidgets.QPushButton('')
+				btn = QPushButton('')
 				setattr(self, button["name"], btn)
 				btn.setIconSize(QtCore.QSize(80, 80))
 				# set focus policy to no focus
@@ -169,9 +158,9 @@ class Window (QtWidgets.QMainWindow):
 				
 			if "icon" in button:
 				if "color" in button:
-					btn.setIcon(qta.icon(button["icon"], color=button["color"]))
+					btn.setIcon(qtawesome.icon(button["icon"], color=button["color"]))
 				else:
-					btn.setIcon(qta.icon(button["icon"], color=fontColor))
+					btn.setIcon(qtawesome.icon(button["icon"], color=fontColor))
 			elif "type" not in button or button["type"] == "button":
 				# set width and height to take the same space as the icon plus the padding
 				btn.setFixedSize(90, 90)
@@ -450,18 +439,19 @@ class Window (QtWidgets.QMainWindow):
 			for y, value in dict(sorted(temporaryList.items())).items():
 				self.x_axis.append(y)
 				self.y_axis.append(value)
-				if y in sortedMarkersList:
-					currentMarker = "1" if sortedMarkersList[y] == 1 else ""
+				if self.lower_slider_value < 0 and self.upper_slider_value > 0:
+					markerPosition = 0
 				else:
-					currentMarker = ""
+					markerPosition = self.lower_slider_value
+				if y in sortedMarkersList:
+					currentMarker = markerPosition if sortedMarkersList[y] == 1 else None
+				else:
+					currentMarker = None
 				
 				self.markers_axis.append(currentMarker)
 
 			workbook = xlsxwriter.Workbook(self.excelFilename)
 			worksheet = workbook.add_worksheet()
-
-			# chart
-			chart = workbook.add_chart({'type': 'line'})
 
 			data = [self.x_axis, self.y_axis, self.markers_axis]
 			for i in range(0, len(data[0])):
@@ -470,27 +460,59 @@ class Window (QtWidgets.QMainWindow):
 			worksheet.write_column('B1', data[1])
 			worksheet.write_column('C1', data[2])
 
-			# Configure the charts. In simplest case we just add some data series.
+			chart = workbook.add_chart({'type': 'line'})
+
 			chart.add_series({
-				'categories': '=Sheet1!$A$1:$A$'+str(len(self.x_axis)-1),
-				'values': '=Sheet1!$B$1:$B$'+str(len(self.y_axis)-1),
+				'categories': '=Sheet1!$A$1:$A$'+str(len(self.x_axis)),
+				'values': '=Sheet1!$B$1:$B$'+str(len(self.y_axis)),
 				'name': 'Psychometric Study'
 			})
 
+			marker_chart = workbook.add_chart({'type': 'scatter'})
+			marker_chart.add_series({
+				'categories': '=Sheet1!$A$1:$A$'+str(len(self.x_axis)),
+				'values': '=Sheet1!$C$1:$C$'+str(len(self.markers_axis)),
+				'name': 'Markers'
+			})
+
+			# Combine the charts.
+			chart.combine(marker_chart)
+
 			chart.set_y_axis({'name': 'response', 'name_font': {
-			                 'size': 14, 'bold': True}, 'num_font':  {'italic': True}})
+			                 'size': 14, 'bold': True}, 'num_font':  {'italic': True},
+							'min': self.lower_slider_value, 'max': self.upper_slider_value,
+							'crossing': self.lower_slider_value
+							 })
 			time = "sec"
 
 			chart.set_x_axis({'name': 'time ('+str(time)+')',
-			                 'name_font': {'size': 14, 'bold': True}, 'num_font':  {'italic': True}})
+			                 'name_font': {'size': 14, 'bold': True}, 'num_font':  {'italic': True},
+							 
+							  'major_gridlines': {
+									'visible': True,
+									'line': {'width': 1, 'dash_type': 'solid'}
+								},
+								'position_axis': 'on_tick'
+							})
 
 			worksheet.insert_chart('D1', chart)
 			workbook.close()
 
 			QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
-		# else:
-			# QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
+
+			if "openExcelAfterSave" in self.defaultConfig:
+				if self.defaultConfig["openExcelAfterSave"] == True:
+					# open the excel file right after the save, with support for mac, linux and windows
+					if not hasattr(os, 'startfile'):
+						os.startfile = lambda f: subprocess.call(["open", f])
+						if shutil.which("open") is not None:
+							os.startfile = lambda f: subprocess.call(["open", f])
+						elif shutil.which("xdg-open") is not None:
+							os.startfile = lambda f: subprocess.call(["xdg-open", f])
+					os.startfile(self.excelFilename)
+		else:
+			QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
 
 	def timeFactor(self):
 		timex = 1
@@ -726,9 +748,13 @@ class Window (QtWidgets.QMainWindow):
 
 		DUCKER, N.T. (2022), Bridging the Gap Between Willingness to Communicate and Learner Talk. 
 		The Modern Language Journal, 106: 216-244. https://doi.org/10.1111/modl.12764
+		
 		DUCKER, N.T. (2021), Protecting and enhancing willingness to communicate
 		with idiodynamic peer-peer strategy sharing.
 		System, 103, 102634 https://doi.org/10.1016/j.system.2021.102634
+
+		Ducker, N. (2020). Perceptions of Silence in the Classroom. The TESOL Encyclopedia of English Language Teaching, 
+		1–8. doi:https://doi.org/10.1002/9781118784235.eelt0987 
 
 		Nathan Ducker
 		Assistant Professor
@@ -766,7 +792,7 @@ class Window (QtWidgets.QMainWindow):
 		#about_texte.setOpenLinks(True)
 
 		# add a button to close the window
-		about_button = QtWidgets.QPushButton("Close", about_window)
+		about_button = QPushButton("Close", about_window)
 		about_button.clicked.connect(about_window.close)
 		# add the button to the layout
 		about_layout = QtWidgets.QVBoxLayout(about_window)
@@ -786,7 +812,7 @@ class Window (QtWidgets.QMainWindow):
 		about_text += "PyQt " + QtCore.PYQT_VERSION_STR + "\n"
 		about_text += "XLSXWriter " + xlsxwriter.__version__ + "\n"
 		about_text += "The Font Awesome and Elusive Icons fonts are licensed under the SIL Open Font License. \n"
-		about_text += "QtAwesome Copyright © 2015–2022 Spyder Project Contributors " + qta.__version__ + "\n"
+		about_text += "QtAwesome Copyright © 2015–2022 Spyder Project Contributors " + qtawesome.__version__ + "\n"
 		about_text += "VLC " + vlc.__version__ + "\n"
 		QtWidgets.QMessageBox.about(self, "About", about_text)
 
