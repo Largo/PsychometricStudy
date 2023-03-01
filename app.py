@@ -10,7 +10,11 @@ if sys.version_info.major < 3:
 # Set paths to the executable file and path to the app.py
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 	bundle_dir = path.abspath(sys._MEIPASS)
-	executable_dir = path.abspath(Path(sys.argv[0]).parent)
+	if sys.platform == "darwin":
+		executable_dir = path.abspath(Path(sys.executable).parent.parent.parent.parent) # directory where the .app is
+	else:
+		executable_dir = path.abspath(Path(sys.executable).parent)
+
 else: 
 	bundle_dir = path.abspath(Path(__file__).parent)
 	executable_dir = bundle_dir
