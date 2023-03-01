@@ -43,6 +43,22 @@ OSX:
 
 ```
 ~/Library/Python/3.8/bin/pyinstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy
+
+brew install create-dmg
+mkdir -p dist/dmg
+cp -r "dist/PsychometricStudy.app" dist/dmg
+rm dist/PsychometricStudy.dmg
+create-dmg \
+  --volname "PsychometricStudy" \
+  --volicon "icon.icns" \
+  --window-pos 200 120 \
+  --window-size 600 300 \
+  --icon-size 100 \
+  --icon "PsychometricStudy.app" 175 120 \
+  --hide-extension "PsychometricStudy.app" \
+  --app-drop-link 425 120 \
+  "dist/PsychometricStudy.dmg" \
+  "dist/dmg/"
 ```
 
 For more information see https://realpython.com/pyinstaller-python/
