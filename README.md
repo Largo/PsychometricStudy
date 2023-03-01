@@ -51,3 +51,8 @@ For more information see https://realpython.com/pyinstaller-python/
 ## Further Reading on Python Libraries
 - https://matiascodesal.com/blog/spice-your-qt-python-font-awesome-icons/
 - https://xlsxwriter.readthedocs.io/chart.html
+- https://realpython.com/pyinstaller-python/
+- https://www.olivieraubert.net/vlc/python-ctypes/doc/vlc-module.html
+- https://www.daniweb.com/programming/tutorials/523626/creating-a-gui-wrapper-for-vlc-media-player-in-python-wxpython
+- https://www.schemecolor.com/spring-of-red-orange.php
+- https://fontawesome.com/v5/search?p=4&o=r&m=free&s=solid
