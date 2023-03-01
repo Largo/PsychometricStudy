@@ -1,9 +1,19 @@
 #! /usr/bin/env python3
+import os, sys, ctypes
+from pathlib import Path
+from os import path
 
-import sys
 if sys.version_info.major < 3:
     print("This script requires Python 3 or later.")
     sys.exit(1)
+
+# Set paths to the executable file and path to the app.py
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+	bundle_dir = path.abspath(sys._MEIPASS)
+	executable_dir = path.abspath(Path(sys.argv[0]).parent)
+else: 
+	bundle_dir = path.abspath(Path(__file__).parent)
+	executable_dir = path.abspath(os.path.dirname(sys.executable))
 
 import os, subprocess, json, xlsxwriter, qtawesome, shutil, version
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -13,6 +23,15 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QKeySequence
 try:
+	# Load VLC
+	if sys.platform == "darwin" or sys.platform == "linux":
+		if getattr(sys, 'frozen', False):
+			pathToDylib = path.abspath(Path(bundle_dir).parent) + os.sep + 'Resources' + os.sep 
+			os.environ.setdefault("LD_LIBRARY_PATH", pathToDylib)
+			os.environ.setdefault("VLC_PLUGIN_PATH", pathToDylib + os.sep + 'plugins')
+			ctypes.CDLL(pathToDylib +  'libvlccore.dylib')
+			ctypes.CDLL(pathToDylib + 'libvlc.dylib')
+
 	import vlc
 	from vlc import EventType
 except:
@@ -244,6 +263,9 @@ class Window (QtWidgets.QMainWindow):
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
+
+		QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(pathToDylib + 'libvlc.dylib'), QtWidgets.QMessageBox.Yes)
+
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
 
@@ -371,7 +393,7 @@ class Window (QtWidgets.QMainWindow):
 		temporaryList = {}
 
 		if self.excelFilename is None:
-			self.excelFilename = os.getcwd() + os.sep + os.path.basename(
+			self.excelFilename = executable_dir + os.sep + os.path.basename(
 			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime()) + ".xlsx"
 
 		if len(self.points_list) > 0 or len(self.markers_list) > 0:
@@ -445,9 +467,13 @@ class Window (QtWidgets.QMainWindow):
 							})
 
 			worksheet.insert_chart('D1', chart)
-			workbook.close()
+			try:
+				workbook.close()
+			except:
+				QtWidgets.QMessageBox.critical(self, "File not Saved", "File could not be saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
+			else: 
+				QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 
-			QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 			self.playedTimes += 1
 
 			if "openExcelAfterSave" in self.defaultConfig:
