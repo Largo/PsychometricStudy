@@ -13,7 +13,7 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 	executable_dir = path.abspath(Path(sys.argv[0]).parent)
 else: 
 	bundle_dir = path.abspath(Path(__file__).parent)
-	executable_dir = path.abspath(os.path.dirname(sys.executable))
+	executable_dir = bundle_dir
 
 import os, subprocess, json, xlsxwriter, qtawesome, shutil, version
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -262,9 +262,6 @@ class Window (QtWidgets.QMainWindow):
 		self.prevMin = 0
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
-
-
-		QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(pathToDylib + 'libvlc.dylib'), QtWidgets.QMessageBox.Yes)
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
