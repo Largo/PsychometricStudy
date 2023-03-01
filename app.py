@@ -5,7 +5,7 @@ if sys.version_info.major < 3:
     print("This script requires Python 3 or later.")
     sys.exit(1)
 
-import os, subprocess, json, xlsxwriter, qtawesome, shutil
+import os, subprocess, json, xlsxwriter, qtawesome, shutil, version
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QPushButton, QLabel, QMessageBox
@@ -670,7 +670,8 @@ class Window (QtWidgets.QMainWindow):
 			self.markers_list.append([int(self.mediaplayer.get_time()/tf), 1])
 
 	def showAbout(self):
-		about_text = """This software was commissioned by Nathan Ducker.
+		about_text = "PsychometricStudy Version: " + version.VERSION + "\n\n"
+		about_text += """This software was commissioned by Nathan Ducker.
 		We kindly request that you cite the applicable paper when using
 		this software for your research or publication purposes.
 
@@ -730,6 +731,7 @@ class Window (QtWidgets.QMainWindow):
 		about_text += "This software was created by: \n"
 		about_text += "Nathan Ducker, Andi Idogawa \n"
 		about_text += "This software uses the following libraries:" + "\n"
+		about_text += "Version of the software: " + version.VERSION + "\n"
 		about_text += "Python " + sys.version + "\n"
 		about_text += "PyQt " + QtCore.PYQT_VERSION_STR + "\n"
 		about_text += "XLSXWriter " + xlsxwriter.__version__ + "\n"

@@ -30,7 +30,7 @@ python app.py
 Without including VLC in the binary. Will need to have VLC installed. VLC will need to be in the path on Windows.
 
 ```
-pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --clean
+pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --clean --version-file=version.py
 ```
 
 Including VLC in the binary. Will work on computers without VLC installed, but is potentially problematic
@@ -42,7 +42,7 @@ pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-
 OSX:
 
 ```
-~/Library/Python/3.8/bin/pyinstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean
+~/Library/Python/3.8/bin/pyinstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy
 ```
 
 For more information see https://realpython.com/pyinstaller-python/
