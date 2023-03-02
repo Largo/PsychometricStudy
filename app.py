@@ -767,7 +767,12 @@ class Window (QtWidgets.QMainWindow):
 		about_text += "VLC " + vlc.__version__ + "\n"
 		QtWidgets.QMessageBox.about(self, "About", about_text)
 
+def crash_handler(exctype, value, traceback):
+    # Handle the exception
+	print("An error occurred:", value)
+
 if __name__=='__main__':
+	sys.excepthook = crash_handler
 	app = QtWidgets.QApplication (sys.argv)
 	app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 	window = Window()

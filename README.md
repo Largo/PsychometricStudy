@@ -1,9 +1,16 @@
 # Psychometric Study
 
-(c) 2022 Nathan Ducker - Miyazaki Municipal University 宮崎公立大学（MMU）
+(c) 2022-2023 Nathan Ducker - Miyazaki Municipal University 宮崎公立大学（MMU）
 If you use this code, please send us a message!
 
 ## Installation
+
+First install Python 3.11 or newer and VLC 3.0.18 or newer
+
+### Supported Operating Systems
+- Windows
+- MacOS
+- Linux
 
 ### Automatic
 ```
@@ -11,12 +18,16 @@ pipenv install
 ```
 
 ### Manual
+
+The following packages are needed. This might administrative permissions.
+
 ```
 pip install xlsxwriter
 pip install python-vlc
 pip install PyQt5
 pip install qtawesome
 pip install pyinstaller
+pip install pillow
 ```
 
 
@@ -30,19 +41,19 @@ python app.py
 Without including VLC in the binary. Will need to have VLC installed. VLC will need to be in the path on Windows.
 
 ```
-pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --clean --version-file=version.py
+python -m PyInstaller app.py --name PsychometricStudy --onefile --clean --icon icon.png
 ```
 
-Including VLC in the binary. Will work on computers without VLC installed, but is potentially problematic
+Including VLC in the binary. Will work on computers without VLC installed, if you are comfortable with redistributing VLC.
 
 ```
-pyinstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks/ --icon icon.png --clean
+python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks --icon icon.png --clean
 ```
 
 OSX:
 
 ```
-~/Library/Python/3.8/bin/pyinstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy
+python -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy
 
 brew install create-dmg
 mkdir -p dist/dmg
