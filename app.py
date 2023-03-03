@@ -267,6 +267,11 @@ class Window (QtWidgets.QMainWindow):
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
+		self.isPaused = True
+		self.timer = QtCore.QTimer(self)
+		self.timer.setInterval(200)
+		self.timer.timeout.connect(self.updateUI)
+
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
 
@@ -274,7 +279,7 @@ class Window (QtWidgets.QMainWindow):
 		newPosition = val/10000.0
 		if newPosition >= 1.0:
 			newPosition = 0.99999
-		self.mediaplayer.set_position(val/10000.000)
+		self.mediaplayer.set_position(newPosition)
 
 	def sliderSilentValue(self, val):
 		self.slider.blockSignals(True)
@@ -282,6 +287,7 @@ class Window (QtWidgets.QMainWindow):
 		self.slider.blockSignals(False)
 
 	def pauseButtonClicked(self, event):
+		self.isPaused = True
 		if self.mediaplayer != None:
 			self.mediaplayer.pause()
 			self.pauseButton.hide()
@@ -333,50 +339,69 @@ class Window (QtWidgets.QMainWindow):
 		self.prevSecond = 0
 		self.prevMin = 0
 
-	def pos_callback(self, event, player):
-		self.updateCounter()
-		playerTime = player.get_time()
+	def updateUI(self):
+		if not self.isPaused:
+			self.playButton.hide()
+			self.pauseButton.show()
 
-		sec = int(playerTime/1000)
-		self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
+			self.backButton.setEnabled(True)
+			self.nextButton.setEnabled(True)
+			self.skipButton.setEnabled(True)
+			self.stopButton.setEnabled(True)
+			self.saveButton.setEnabled(True)
+			self.incButton.setEnabled(True)
+			self.decButton.setEnabled(True)
+			self.markerButton.setEnabled(True)
+			self.slider.setEnabled(True)
+		else:
+			self.playButton.show()
+			self.pauseButton.hide()
+			self.backButton.setEnabled(False)
+			self.nextButton.setEnabled(False)
+			self.skipButton.setEnabled(False)
+			self.stopButton.setEnabled(False)
+			self.saveButton.setEnabled(False)
+			self.incButton.setEnabled(False)
+			self.decButton.setEnabled(False)
+			self.markerButton.setEnabled(False)
+			self.slider.setEnabled(False)
 
-		if (sec != self.prevSecond) and len(self.points_list) > 0:
-			tf = self.timeFactor()
-			self.points_list.append([int(playerTime/tf), self.points])
+		if self.mediaplayer.is_playing():
+			self.updateCounter()
+			playerTime = self.mediaplayer.get_time()
 
-		if (sec != self.prevSecond):
-			tf = self.timeFactor()
-			self.points_list.append([int(playerTime/tf), self.points])
+			sec = int(playerTime/1000)
+			self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 
-		if self.slider != None:
-			length = player.get_length()
-			scaled_player_time = int((playerTime / length) * 10000)
-			self.sliderSilentValue(scaled_player_time)
-
-		if "autoReturnRatingsToZero" in self.defaultConfig and self.defaultConfig["autoReturnRatingsToZero"] == True:
-			if (sec != self.prevSecond) and self.locked == False:
+			if (sec != self.prevSecond) and len(self.points_list) > 0:
 				tf = self.timeFactor()
-				if (time.time()-self.eta) >= 2:
-					if self.points > 0:
-						self.points -= 1
+				self.points_list.append([int(playerTime/tf), self.points])
 
-					if self.points < 0:
-						self.points += 1
+			if (sec != self.prevSecond):
+				tf = self.timeFactor()
+				self.points_list.append([int(playerTime/tf), self.points])
 
-		self.prevSecond = int(playerTime/1000)
-		self.prevMin = int(playerTime/(60*1000))
-		
+			if self.slider != None:
+				length = self.mediaplayer.get_length()
+				scaled_player_time = int((playerTime / length) * 10000)
+				self.sliderSilentValue(scaled_player_time)
 
-	def setListeners(self):
+			if "autoReturnRatingsToZero" in self.defaultConfig and self.defaultConfig["autoReturnRatingsToZero"] == True:
+				if (sec != self.prevSecond) and self.locked == False:
+					tf = self.timeFactor()
+					if (time.time()-self.eta) >= 2:
+						if self.points > 0:
+							self.points -= 1
 
-		if self.mediaplayer != None:
-			event_manager = self.mediaplayer.event_manager()
-			event_manager.event_detach(EventType.MediaPlayerEndReached)
-			event_manager.event_detach(EventType.MediaPlayerPositionChanged)
-			event_manager.event_attach(
-			    EventType.MediaPlayerEndReached, self.end_callback)
-			event_manager.event_attach(
-			    EventType.MediaPlayerPositionChanged, self.pos_callback, self.mediaplayer)
+						if self.points < 0:
+							self.points += 1
+
+			self.prevSecond = int(playerTime/1000)
+			self.prevMin = int(playerTime/(60*1000))
+		else:
+			self.timer.stop()
+			if not self.isPaused:
+				self.stopClicked(None)
 
 	def setTheFilename(self):
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
@@ -519,24 +544,13 @@ class Window (QtWidgets.QMainWindow):
 
 	def playClicked(self, event):
 		if self.mediaplayer != None:
+			self.timer.start()
 			self.mediaplayer.play()
-			
-			self.playButton.hide()
-			self.pauseButton.show()
-
-			self.backButton.setEnabled(True)
-			self.nextButton.setEnabled(True)
-			self.skipButton.setEnabled(True)
-			self.stopButton.setEnabled(True)
-			self.saveButton.setEnabled(True)
-			self.incButton.setEnabled(True)
-			self.decButton.setEnabled(True)
-			self.markerButton.setEnabled(True)
-			self.slider.setEnabled(True)
+			self.isPaused = False
 
 	def changePlayButton(self, event):
 		# if the video is playing, change the button to pause
-		if self.mediaplayer.is_playing():
+		if self.isPaused == False:
 			self.pauseButtonClicked(None)
 		else:
 			self.playClicked(None)
@@ -573,7 +587,6 @@ class Window (QtWidgets.QMainWindow):
 			elif sys.platform == "darwin":  # for MacOS
 				self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
 
-			self.setListeners()
 			self.playButton.setEnabled(True)
 			self.resetMetrics()
 
