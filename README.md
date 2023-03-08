@@ -41,13 +41,13 @@ python app.py
 Without including VLC in the binary. Will need to have VLC installed. VLC will need to be in the path on Windows.
 
 ```
-python -m PyInstaller app.py --name PsychometricStudy --onefile --clean --icon icon.png
+python -m PyInstaller app.py --name PsychometricStudy --onefile --clean --icon icon.ico --add-binary icon.ico
 ```
 
 Including VLC in the binary. Will work on computers without VLC installed, if you are comfortable with redistributing VLC.
 
 ```
-python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks --icon icon.png --clean
+python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks --icon icon.ico --add-data="icon.ico;." --clean
 ```
 
 OSX:

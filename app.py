@@ -78,7 +78,10 @@ class Window (QtWidgets.QMainWindow):
 
 	def __init__(self):
 		super(Window, self).__init__()
-		self.setWindowIcon(QtGui.QIcon('icon.png'))
+		if sys.platform == "darwin":
+			self.setWindowIcon(QtGui.QIcon(os.path.join(bundle_dir, 'icon.icns')))
+		else:
+			self.setWindowIcon(QtGui.QIcon(os.path.join(bundle_dir, 'icon.ico')))
 		self.setWindowTitle(app_name)
 		self.setMinimumSize(750, 600)
 		self.resize(1200, 1000)
