@@ -85,9 +85,6 @@ class Window (QtWidgets.QMainWindow):
 		self.setWindowTitle(app_name)
 		self.setMinimumSize(750, 600)
 		self.resize(1200, 1000)
-		self.vlc_instance = vlc.Instance()
-		self.mediaplayer = self.vlc_instance.media_player_new()
-		self.media = None
 
 		self.widget = QtWidgets.QWidget(self)
 		self.setCentralWidget(self.widget)
@@ -135,7 +132,7 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "backButton", "icon": "fa5s.backward",
 			    "enabled": False, "pressed": self.backButtonClicked, "hotkey": ["left"], "setAutoRepeat": True},
 			{"name": "stopButton", "icon": "fa5s.stop",
-			    "enabled": False, "clicked": self.stopClicked},
+			    "enabled": False, "clicked": self.stopButtonClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "pressed": self.nextButtonClicked, "hotkey": ["right"], "setAutoRepeat": True},
 			{"name": "stretch", "type": "stretch", "factor": 1},
@@ -273,10 +270,32 @@ class Window (QtWidgets.QMainWindow):
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
 		self.isPaused = True
+		self.setUpVLC()
+
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(200)
 		self.timer.timeout.connect(self.updateUI)
 		self.timer.start()
+
+	def setUpVLC(self):
+		self.vlc_instance = vlc.Instance()
+		self.mediaplayer = self.vlc_instance.media_player_new()
+		self.media = None
+		self.mediaplayer.video_set_key_input(False) # disable hotkeys on VLC
+		self.mediaplayer.video_set_mouse_input(False) # disable mouse events on VLC
+
+		if sys.platform.startswith('linux'):  # for Linux using the X Server
+			self.mediaplayer.set_xwindow(int(self.videoframe.winId()))
+		elif sys.platform == "win32":  # for Windows
+			self.mediaplayer.set_hwnd(self.videoframe.winId())
+		elif sys.platform == "darwin":  # for MacOS
+			self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
+
+		#event_manager = self.mediaplayer.event_manager()
+		#event_manager.event_attach (EventType.MediaPlayerEndReached, self.vlcEndReached)
+
+	#def vlcEndReached(self, event):
+
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
@@ -293,6 +312,9 @@ class Window (QtWidgets.QMainWindow):
 		self.slider.blockSignals(False)
 
 	def pauseButtonClicked(self, event):
+		self.pause()
+	
+	def pause(self):
 		self.isPaused = True
 		if self.mediaplayer != None:
 			self.mediaplayer.pause()
@@ -300,23 +322,28 @@ class Window (QtWidgets.QMainWindow):
 			self.playButton.show()
 
 	def backButtonClicked(self):
-		if self.mediaplayer != None:
-			self.mediaplayer.set_time(self.mediaplayer.get_time() - 1000)
+		self.seekBySeconds(-1)
 
 	def nextButtonClicked(self):
-		if self.mediaplayer != None:
-			self.mediaplayer.set_time(self.mediaplayer.get_time() + 1000)
+		self.seekBySeconds(1)
 
 	def skipButtonClicked(self):
 		if "skipTimeInSec" in self.defaultConfig:
 			skipTimeInSec = self.defaultConfig["skipTimeInSec"]
 		else:
 			skipTimeInSec = 60
-		if self.mediaplayer != None:
-			if self.mediaplayer.get_time() + (skipTimeInSec * 1000) > self.mediaplayer.get_length():
-				self.mediaplayer.set_time(self.mediaplayer.get_length())
+		self.seekBySeconds(skipTimeInSec)
+		
+	def seekBySeconds(self, skipTimeInSec):
+		if self.hasMedia():
+			videoLength = self.mediaplayer.get_length()
+			videoTime = self.mediaplayer.get_time() 
+			if videoTime + (skipTimeInSec * 1000) > videoLength:
+				self.mediaplayer.set_time(videoLength)
+			elif videoTime + (skipTimeInSec * 1000) < 0:
+				self.mediaplayer.set_time(0)
 			else:
-				self.mediaplayer.set_time(self.mediaplayer.get_time() + (skipTimeInSec * 1000))
+				self.mediaplayer.set_time(videoTime + (skipTimeInSec * 1000))
 
 	def releaseButton(self):
 		self.locked = False
@@ -335,15 +362,17 @@ class Window (QtWidgets.QMainWindow):
 			self.locked = True
 			self.eta = time.time()
 
-	def stopPlayer(self):
-		self.stopClicked(None)
+	def restartVideo(self):
+		if self.mediaplayer != None:
+			self.pause()
+			# initialise seconds elapsed
+			self.sliderSilentValue(0)
+			self.prevSecond = 0
+			self.prevMin = 0
+			self.mediaplayer.set_position(0.0)
 
-	def end_callback(self, event):
-		self.mediaplayer.set_position(0)
-		self.sliderSilentValue(0)
-		# initialise seconds elapsed
-		self.prevSecond = 0
-		self.prevMin = 0
+	def stopButtonClicked(self):
+		self.restartVideo()
 
 	def updateUI(self):
 		hasMedia = self.hasMedia()
@@ -370,13 +399,13 @@ class Window (QtWidgets.QMainWindow):
 				playerTime = self.mediaplayer.get_time()
 				sec = int(playerTime/1000)
 				self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
-				length = self.mediaplayer.get_length()
-				scaled_player_time = int((playerTime / length) * 10000)
-				self.sliderSilentValue(scaled_player_time)
+				videoLength = self.mediaplayer.get_length()
+				if videoLength > 0:
+					scaled_player_time = int((playerTime / videoLength) * 10000)
+					self.sliderSilentValue(scaled_player_time)
 
 		if hasMedia and self.mediaplayer.is_playing():
-			self.updateCounter()
-			
+			self.updateCounter()		
 			tf = self.timeFactor()
 
 			if (sec != self.prevSecond):
@@ -394,9 +423,30 @@ class Window (QtWidgets.QMainWindow):
 
 			self.prevSecond = int(playerTime/1000)
 			self.prevMin = int(playerTime/(60*1000))
-		else:
+		elif hasMedia:
 			if not self.isPaused:
-				self.stopClicked(None)
+				print(playerTime)
+				print(videoLength)
+				#self.isPaused = True
+			
+		if self.mediaplayer != None and self.media and self.mediaplayer.get_state() == vlc.State.Ended and self.mediaplayer.will_play() == False:
+			self.isPaused = True
+			self.mediaplayer.stop()
+			vlc_playing = set([3, 4]) #  3 - Playing | 4 - Paused
+			media_state = self.mediaplayer.get_state()
+			while media_state not in vlc_playing:
+				self.mediaplayer.play()
+				time.sleep(0.01)
+				media_state = self.mediaplayer.get_state()
+			while media_state != vlc.State.Paused:
+				self.mediaplayer.pause()
+				time.sleep(0.01)
+				media_state = self.mediaplayer.get_state()
+			self.mediaplayer.set_position(0.999)
+			
+				#self.mediaplayer.play()
+				#self.mediaplayer.pause()
+				
 
 	def setTheFilename(self):
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
@@ -524,10 +574,11 @@ class Window (QtWidgets.QMainWindow):
                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 		# Get the user's choice and act accordingly
 		if choice == QMessageBox.Yes:
+			self.pause()
 			self.confirmResetMetrics()
 
 	def hasMedia(self):
-		return self.media != None
+		return self.media != None and self.mediaplayer != None and self.mediaplayer.get_length() > 0
 	
 	def confirmResetMetrics(self):
 		if self.hasMedia():
@@ -569,16 +620,10 @@ class Window (QtWidgets.QMainWindow):
 		else:
 			self.playClicked(None)
 
-	def stopClicked(self, event):
-		if self.mediaplayer != None:
-			self.mediaplayer.stop()
-
 	def loadVideo(self):
-		#self.stopClicked(None)
 		path = str(QtWidgets.QFileDialog.getOpenFileName(
 		    self, "Load Video File", '', "video files (*.*)")[0])
 		self.loadVideoFromPath(path)
-
 
 	def loadVideoFromPath(self, path):
 		print(path)
@@ -587,20 +632,13 @@ class Window (QtWidgets.QMainWindow):
 		if len(path) > 0:
 			self.UNIT = self.SECOND
 
+			self.isPaused = True
 			self.media = self.vlc_instance.media_new(str(path))
 			self.mediaplayer.set_media(self.media)	
 			self.media.parse()
 
-			if sys.platform.startswith('linux'):  # for Linux using the X Server
-				self.mediaplayer.set_xwindow(int(self.videoframe.winId()))
-			elif sys.platform == "win32":  # for Windows
-				self.mediaplayer.set_hwnd(self.videoframe.winId())
-			elif sys.platform == "darwin":  # for MacOS
-				self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
-
 			self.playButton.setEnabled(True)
 			self.resetMetrics()
-
 
 	def createMenu(self):
 		self.openAction = QtWidgets.QAction(
