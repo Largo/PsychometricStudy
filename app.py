@@ -274,6 +274,7 @@ class Window (QtWidgets.QMainWindow):
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(200)
 		self.timer.timeout.connect(self.updateUI)
+		self.timer.start()
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
@@ -402,7 +403,6 @@ class Window (QtWidgets.QMainWindow):
 			self.prevSecond = int(playerTime/1000)
 			self.prevMin = int(playerTime/(60*1000))
 		else:
-			self.timer.stop()
 			if not self.isPaused:
 				self.stopClicked(None)
 
@@ -415,6 +415,9 @@ class Window (QtWidgets.QMainWindow):
 		if self.excelFilename is not None:
 			self.save(event)
 
+	def hasData(self):
+		return len(self.points_list) > 0 or len(self.markers_list) > 0
+
 	def save(self, event):
 		self.x_axis = []
 		self.y_axis = []
@@ -425,7 +428,7 @@ class Window (QtWidgets.QMainWindow):
 			self.excelFilename = executable_dir + os.sep + os.path.basename(
 			    self.filename)+" ("+str(self.playedTimes)+") "+strftime("%Y-%m-%d %H-%M-%S", gmtime()) + ".xlsx"
 
-		if len(self.points_list) > 0 or len(self.markers_list) > 0:
+		if self.hasData():
 			for i in range(0, len(self.points_list)):
 				[y, value] = self.points_list[i]
 				temporaryList[y] = value
@@ -523,6 +526,14 @@ class Window (QtWidgets.QMainWindow):
 		if self.UNIT == self.SECOND:
 			timex = 1000
 		return timex
+	
+	def confirmResetMetrics(self):
+		if self.media != None:
+			if self.hasData():
+				self.saveAs(None)
+			if self.excelFilename is not None:
+				self.resetMetrics()
+
 
 	def resetMetrics(self):
 		if self.media != None:
@@ -547,7 +558,6 @@ class Window (QtWidgets.QMainWindow):
 
 	def playClicked(self, event):
 		if self.mediaplayer != None:
-			self.timer.start()
 			self.mediaplayer.play()
 			self.isPaused = False
 
@@ -561,12 +571,10 @@ class Window (QtWidgets.QMainWindow):
 	def stopClicked(self, event):
 		if self.mediaplayer != None:
 			self.mediaplayer.stop()
-			self.pauseButton.hide()
-			self.playButton.show()
-			self.resetMetrics()			
+			self.confirmResetMetrics()
 
 	def loadVideo(self):
-		self.stopClicked(None)
+		#self.stopClicked(None)
 		path = str(QtWidgets.QFileDialog.getOpenFileName(
 		    self, "Load Video File", '', "video files (*.*)")[0])
 		self.loadVideoFromPath(path)
