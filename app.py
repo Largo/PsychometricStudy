@@ -461,6 +461,8 @@ class Window (QtWidgets.QMainWindow):
 		return len(self.points_list) > 0 or len(self.markers_list) > 0
 
 	def save(self, event):
+		self.pause()
+
 		self.x_axis = []
 		self.y_axis = []
 		self.markers_axis = []
@@ -552,16 +554,21 @@ class Window (QtWidgets.QMainWindow):
 
 			if "openExcelAfterSave" in self.defaultConfig:
 				if self.defaultConfig["openExcelAfterSave"] == True:
-					# open the excel file right after the save, with support for mac, linux and windows
-					if not hasattr(os, 'startfile'):
-						os.startfile = lambda f: subprocess.call(["open", f])
-						if shutil.which("open") is not None:
-							os.startfile = lambda f: subprocess.call(["open", f])
-						elif shutil.which("xdg-open") is not None:
-							os.startfile = lambda f: subprocess.call(["xdg-open", f])
-					os.startfile(self.excelFilename)
+					# open the excel file right after the save
+					self.openExcelFile()
 		else:
 			QtWidgets.QMessageBox.critical(self, "Error","You need to provide your response to video", QtWidgets.QMessageBox.Yes)
+
+	def openExcelFile(self):
+		if self.excelFilename != None:
+			# open the excel file, with support for mac, linux and windows
+			if not hasattr(os, 'startfile'):
+				os.startfile = lambda f: subprocess.call(["open", f])
+				if shutil.which("open") is not None:
+					os.startfile = lambda f: subprocess.call(["open", f])
+				elif shutil.which("xdg-open") is not None:
+					os.startfile = lambda f: subprocess.call(["xdg-open", f])
+			os.startfile(self.excelFilename)
 
 	def timeFactor(self):
 		timex = 1
@@ -610,11 +617,10 @@ class Window (QtWidgets.QMainWindow):
 			self.record_zeros = False
 
 	def playClicked(self, event):
-		if self.mediaplayer != None:
+		if self.hasMedia():
 			if self.mediaplayer.get_position() >= 0.999: # restart the video in case it is paused at the last frame
 				self.restartVideo()
-			else: 
-				self.mediaplayer.play()
+			self.mediaplayer.play()
 			self.isPaused = False
 
 
@@ -645,45 +651,26 @@ class Window (QtWidgets.QMainWindow):
 			self.resetMetrics()
 
 	def createMenu(self):
-		self.openAction = QtWidgets.QAction(
-		    "Load video file", self, triggered=self.loadVideo)
-		self.openAction.setShortcut('Ctrl+O')
-
-		self.saveAction = QtWidgets.QAction("Save", self, triggered=self.save)
-		self.saveAction.setShortcut('Ctrl+S')
-
-		self.saveAsAction = QtWidgets.QAction("Save as", self, triggered=self.saveAs)
-		self.saveAsAction.setShortcut('Ctrl+Shift+S')
-
-		self.exitAction = QtWidgets.QAction(
-		    "Exit", self, triggered=QtCore.QCoreApplication.instance().quit)
-		self.exitAction.setShortcut('Ctrl+Q')
-
 		menubar = self.menuBar()
 		fileMenu = menubar.addMenu('&File')
-		fileMenu.addAction(self.openAction)
-		fileMenu.addAction(self.saveAction)
-		fileMenu.addAction(self.saveAsAction)
-		fileMenu.addAction(self.exitAction)
-
+		fileMenu.addAction(QtWidgets.QAction("Load video file", self, triggered=self.loadVideo, shortcut='Ctrl+O'))
+		fileMenu.addAction(QtWidgets.QAction("Save", self, triggered=self.save, shortcut='Ctrl+S'))
+		fileMenu.addAction(QtWidgets.QAction("Save as", self, triggered=self.saveAs, shortcut='Ctrl+Shift+S'))
+		fileMenu.addSeparator()
+		fileMenu.addAction(QtWidgets.QAction("Open current Excel File", self, triggered=self.openExcelFile, shortcut='Ctrl+E'))
+		fileMenu.addSeparator()
+		fileMenu.addAction(QtWidgets.QAction("Exit", self, triggered=QtCore.QCoreApplication.instance().quit, shortcut='Ctrl+Q'))
+		
 		self.initDialog()
-
 		settingsMenu = menubar.addMenu('&Settings')
-		set_range_action = QtWidgets.QAction("&Set Range", self)
-		set_range_action.triggered.connect(self.showDialog)
-		settingsMenu.addAction(set_range_action)
+		settingsMenu.addAction(QtWidgets.QAction("&Set Range", self, triggered=self.showDialog, shortcut='Ctrl+R'))
 
 		# Help Menu
 		helpMenu = menubar.addMenu('&Help')
-		aboutAction = QtWidgets.QAction("&About", self)
-
 		# add a menu item with information about used libraries
-		licensesAction = QtWidgets.QAction("&Licenses", self)
-		licensesAction.triggered.connect(self.showLicenses)
-		helpMenu.addAction(licensesAction)
+		helpMenu.addAction(QtWidgets.QAction("&Licenses", self, triggered=self.showLicenses))
+		helpMenu.addAction(QtWidgets.QAction("&About", self, triggered=self.showAbout))
 
-		aboutAction.triggered.connect(self.showAbout)
-		helpMenu.addAction(aboutAction)
 
 	def initDialog(self):
 		self.lower_slider_value = -10
