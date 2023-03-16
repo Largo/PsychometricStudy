@@ -268,7 +268,6 @@ class Window (QtWidgets.QMainWindow):
 		self.createMenu()
 
 		self.prevSecond = 0
-		self.prevMin = 0
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
@@ -367,7 +366,6 @@ class Window (QtWidgets.QMainWindow):
 			# initialise seconds elapsed
 			self.sliderSilentValue(0)
 			self.prevSecond = 0
-			self.prevMin = 0
 			self.mediaplayer.set_position(0.0)
 
 	def stopButtonClicked(self):
@@ -384,11 +382,11 @@ class Window (QtWidgets.QMainWindow):
 		self.nextButton.setEnabled(hasMedia)
 		self.skipButton.setEnabled(hasMedia)
 		self.stopButton.setEnabled(hasMedia)
-		self.saveButton.setEnabled(hasMedia)
+		self.saveButton.setEnabled(hasMedia and self.hasUnsavedChanges)
 		self.incButton.setEnabled(showButtons)
 		self.decButton.setEnabled(showButtons)
 		self.markerButton.setEnabled(showButtons)
-		self.deleteButton.setEnabled(hasMedia)
+		self.deleteButton.setEnabled(hasMedia and len(self.points_list) > 0)
 		self.slider.setEnabled(hasMedia)
 
 		# show the correct icon on the play/pause Button
@@ -414,6 +412,7 @@ class Window (QtWidgets.QMainWindow):
 
 			if (sec != self.prevSecond):
 				self.points_list.append([int(playerTime/tf), self.points])
+				self.hasUnsavedChanges = True
 
 			if "autoReturnRatingsToZero" in self.defaultConfig and self.defaultConfig["autoReturnRatingsToZero"] == True:
 				if (sec != self.prevSecond) and self.locked == False:
@@ -421,12 +420,10 @@ class Window (QtWidgets.QMainWindow):
 					if (time.time()-self.eta) >= 2:
 						if self.points > 0:
 							self.points -= 1
-
 						if self.points < 0:
 							self.points += 1
 
 			self.prevSecond = int(playerTime/1000)
-			self.prevMin = int(playerTime/(60*1000))
 
 		# If the end is reached while playing or skipping, we need to stop the video and show the last frame with a workaround so the controls keep working
 		if self.mediaplayer != None and self.media and self.mediaplayer.get_state() == vlc.State.Ended and self.mediaplayer.will_play() == False:
@@ -443,10 +440,19 @@ class Window (QtWidgets.QMainWindow):
 				time.sleep(0.01)
 				media_state = self.mediaplayer.get_state()
 			self.mediaplayer.set_position(0.999)
-			
-				#self.mediaplayer.play()
-				#self.mediaplayer.pause()
-				
+
+		if self.hasMedia() and self.hasUnsavedChanges:
+			windowTitle = app_name + '*'
+			if self.windowTitle() != windowTitle:
+				self.setWindowTitle(windowTitle)
+			if self.mediaplayer.get_position() >= 0.999 and self.mediaplayer.is_playing():
+				# automatically open saveAs if the file played to the end.
+				if not ("saveAfterPlaying" in self.defaultConfig and self.defaultConfig["saveAfterPlaying"] != True):
+						self.saveAs(None)
+		if self.hasMedia() and not self.hasUnsavedChanges:
+			windowTitle = app_name
+			if self.windowTitle() != windowTitle:
+				self.setWindowTitle(windowTitle)
 
 	def setTheFilename(self):
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
@@ -549,6 +555,7 @@ class Window (QtWidgets.QMainWindow):
 				QtWidgets.QMessageBox.critical(self, "File not Saved", "File could not be saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
 			else: 
 				QtWidgets.QMessageBox.information(self, "File Saved", "File saved at " + str(self.excelFilename), QtWidgets.QMessageBox.Yes)
+				self.hasUnsavedChanges = False
 
 			self.playedTimes += 1
 
@@ -578,7 +585,7 @@ class Window (QtWidgets.QMainWindow):
 	
 	def delete(self, event):
 		self.pause()
-		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data? If yes, we will first save the data.',
+		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data? If yes, we will first save unsaved data.',
                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 		# Get the user's choice and act accordingly
 		if choice == QMessageBox.Yes:
@@ -590,7 +597,7 @@ class Window (QtWidgets.QMainWindow):
 	
 	def confirmResetMetrics(self):
 		if self.hasMedia():
-			if self.hasData():
+			if self.hasData() and self.hasUnsavedChanges:
 				self.saveAs(None)
 			if self.excelFilename is not None:
 				self.resetMetrics()
@@ -607,14 +614,13 @@ class Window (QtWidgets.QMainWindow):
 
 			# initialise seconds elapsed
 			self.prevSecond = 0
-			self.prevMin = 0
 
 			# init slider
 			self.slider.setRange(0, 10000)
 			self.slider.setValue(0)
 			self.totalTime.setText(str(datetime.timedelta(
 			    seconds=int(self.media.get_duration()/1000))))
-			self.record_zeros = False
+			self.hasUnsavedChanges = False
 
 	def playClicked(self, event):
 		if self.hasMedia():
@@ -637,7 +643,6 @@ class Window (QtWidgets.QMainWindow):
 		self.loadVideoFromPath(path)
 
 	def loadVideoFromPath(self, path):
-		print(path)
 		self.filename = path
 		self.playedTimes = 0
 		if len(path) > 0:
