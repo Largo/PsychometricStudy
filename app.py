@@ -364,6 +364,7 @@ class Window (QtWidgets.QMainWindow):
 
 	def restartVideo(self):
 		if self.mediaplayer != None:
+			self.isPaused = True
 			self.pause()
 			# initialise seconds elapsed
 			self.sliderSilentValue(0)
@@ -380,7 +381,7 @@ class Window (QtWidgets.QMainWindow):
 		self.backButton.setEnabled(hasMedia)
 		self.nextButton.setEnabled(hasMedia)
 		self.skipButton.setEnabled(hasMedia)
-		self.stopButton.setEnabled(showButtons)
+		self.stopButton.setEnabled(hasMedia)
 		self.saveButton.setEnabled(showButtons)
 		self.incButton.setEnabled(showButtons)
 		self.decButton.setEnabled(showButtons)
@@ -423,12 +424,8 @@ class Window (QtWidgets.QMainWindow):
 
 			self.prevSecond = int(playerTime/1000)
 			self.prevMin = int(playerTime/(60*1000))
-		elif hasMedia:
-			if not self.isPaused:
-				print(playerTime)
-				print(videoLength)
-				#self.isPaused = True
-			
+
+		# If the end is reached while playing or skipping, we need to stop the video and show the last frame with a workaround so the controls keep working
 		if self.mediaplayer != None and self.media and self.mediaplayer.get_state() == vlc.State.Ended and self.mediaplayer.will_play() == False:
 			self.isPaused = True
 			self.mediaplayer.stop()
@@ -610,8 +607,12 @@ class Window (QtWidgets.QMainWindow):
 
 	def playClicked(self, event):
 		if self.mediaplayer != None:
-			self.mediaplayer.play()
+			if self.mediaplayer.get_position() >= 0.999: # restart the video in case it is paused at the last frame
+				self.restartVideo()
+			else: 
+				self.mediaplayer.play()
 			self.isPaused = False
+
 
 	def changePlayButton(self, event):
 		# if the video is playing, change the button to pause
