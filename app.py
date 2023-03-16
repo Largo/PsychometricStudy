@@ -154,7 +154,7 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "saveButton", "icon": "fa5s.save",
 			    "enabled": False, "clicked": self.save},
 			{"name": "deleteButton", "icon": "fa5s.trash",
-			    "enabled": False, "clicked": self.delete},
+			    "enabled": False, "clicked": self.delete, "color": "#dc3545"},
 		]
 
 		for button in buttons:
@@ -346,17 +346,18 @@ class Window (QtWidgets.QMainWindow):
 		self.prevMin = 0
 
 	def updateUI(self):
+		hasMedia = self.hasMedia()
 		showButtons = not self.isPaused
-		self.backButton.setEnabled(showButtons)
-		self.nextButton.setEnabled(showButtons)
-		self.skipButton.setEnabled(showButtons)
+		self.backButton.setEnabled(hasMedia)
+		self.nextButton.setEnabled(hasMedia)
+		self.skipButton.setEnabled(hasMedia)
 		self.stopButton.setEnabled(showButtons)
 		self.saveButton.setEnabled(showButtons)
 		self.incButton.setEnabled(showButtons)
 		self.decButton.setEnabled(showButtons)
 		self.markerButton.setEnabled(showButtons)
 		self.deleteButton.setEnabled(showButtons)
-		self.slider.setEnabled(showButtons)
+		self.slider.setEnabled(hasMedia)
 
 		if not self.isPaused:
 			self.playButton.hide()
@@ -365,25 +366,21 @@ class Window (QtWidgets.QMainWindow):
 			self.playButton.show()
 			self.pauseButton.hide()
 
-		if self.mediaplayer.is_playing():
-			self.updateCounter()
-			playerTime = self.mediaplayer.get_time()
-
-			sec = int(playerTime/1000)
-			self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
-
-			if (sec != self.prevSecond) and len(self.points_list) > 0:
-				tf = self.timeFactor()
-				self.points_list.append([int(playerTime/tf), self.points])
-
-			if (sec != self.prevSecond):
-				tf = self.timeFactor()
-				self.points_list.append([int(playerTime/tf), self.points])
-
-			if self.slider != None:
+		if hasMedia:
+				playerTime = self.mediaplayer.get_time()
+				sec = int(playerTime/1000)
+				self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 				length = self.mediaplayer.get_length()
 				scaled_player_time = int((playerTime / length) * 10000)
 				self.sliderSilentValue(scaled_player_time)
+
+		if hasMedia and self.mediaplayer.is_playing():
+			self.updateCounter()
+			
+			tf = self.timeFactor()
+
+			if (sec != self.prevSecond):
+				self.points_list.append([int(playerTime/tf), self.points])
 
 			if "autoReturnRatingsToZero" in self.defaultConfig and self.defaultConfig["autoReturnRatingsToZero"] == True:
 				if (sec != self.prevSecond) and self.locked == False:
@@ -523,21 +520,24 @@ class Window (QtWidgets.QMainWindow):
 		return timex
 	
 	def delete(self, event):
-		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete this item?',
+		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data? If yes, we will first save the data.',
                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 		# Get the user's choice and act accordingly
 		if choice == QMessageBox.Yes:
 			self.confirmResetMetrics()
+
+	def hasMedia(self):
+		return self.media != None
 	
 	def confirmResetMetrics(self):
-		if self.media != None:
+		if self.hasMedia():
 			if self.hasData():
 				self.saveAs(None)
 			if self.excelFilename is not None:
 				self.resetMetrics()
 
 	def resetMetrics(self):
-		if self.media != None:
+		if self.hasMedia():
 			tf = self.timeFactor()
 			duration = int(self.media.get_duration() / tf)
 			self.x_axis = [x for x in range(0, duration+1)]
