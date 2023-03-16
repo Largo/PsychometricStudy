@@ -104,9 +104,6 @@ class Window (QtWidgets.QMainWindow):
 			print(f"An error occurred: {e}")
 
 		self.excelFilename = None
-		if "defaultExcelPath" in self.defaultConfig:
-			self.excelFilename = self.defaultConfig["defaultExcelPath"]
-
 		self.videoframe = QtWidgets.QFrame()
 		self.palette = self.videoframe.palette()
 		self.palette.setColor(QtGui.QPalette.Window, QtGui.QColor(0, 0, 0))
@@ -325,11 +322,7 @@ class Window (QtWidgets.QMainWindow):
 		self.seekBySeconds(1)
 
 	def skipButtonClicked(self):
-		if "skipTimeInSec" in self.defaultConfig:
-			skipTimeInSec = self.defaultConfig["skipTimeInSec"]
-		else:
-			skipTimeInSec = 60
-		self.seekBySeconds(skipTimeInSec)
+		self.seekBySeconds(self.skipTimeInSec)
 		
 	def seekBySeconds(self, skipTimeInSec):
 		if self.hasMedia():
@@ -684,7 +677,12 @@ class Window (QtWidgets.QMainWindow):
 			self.lower_slider_value = self.defaultConfig["lowerSliderValue"]
 		if "upperSliderValue" in self.defaultConfig:
 			self.upper_slider_value = self.defaultConfig["upperSliderValue"]
-	
+		if "defaultExcelPath" in self.defaultConfig:
+			self.excelFilename = self.defaultConfig["defaultExcelPath"]
+		if "skipTimeInSec" in self.defaultConfig:
+			self.skipTimeInSec = self.defaultConfig["skipTimeInSec"]
+		else:
+			self.skipTimeInSec = 60
 
 	def showDialog(self):
         # create a dialog for defining the range
@@ -724,6 +722,16 @@ class Window (QtWidgets.QMainWindow):
 		hbox_upper = QHBoxLayout()
 		hbox_upper.addWidget(QLabel("Upper Bound"))
 		hbox_upper.addWidget(self.upper_slider)
+
+		skip_time_spinbox = QtWidgets.QSpinBox(self)
+		skip_time_spinbox.setRange(0, 9999) # set the valid range for the input value
+		skip_time_spinbox.setValue(self.skipTimeInSec) # set the default value to 0
+		hbox_spinbox = QHBoxLayout()
+		hbox_spinbox.addWidget(QtWidgets.QLabel("Skip Time in Seconds", self))
+		hbox_spinbox.addWidget(skip_time_spinbox)
+		skip_time_spinbox.valueChanged.connect(lambda value: setattr(self, 'skipTimeInSec', value))
+
+		vbox.addLayout(hbox_spinbox )
 
         # add the horizontal layouts and label to the vertical layout
 		vbox.addLayout(hbox_lower)
