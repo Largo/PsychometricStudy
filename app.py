@@ -153,6 +153,8 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"], "color": "#F5BD0A"},
 			{"name": "saveButton", "icon": "fa5s.save",
 			    "enabled": False, "clicked": self.save},
+			{"name": "deleteButton", "icon": "fa5s.trash",
+			    "enabled": False, "clicked": self.delete},
 		]
 
 		for button in buttons:
@@ -344,31 +346,24 @@ class Window (QtWidgets.QMainWindow):
 		self.prevMin = 0
 
 	def updateUI(self):
+		showButtons = not self.isPaused
+		self.backButton.setEnabled(showButtons)
+		self.nextButton.setEnabled(showButtons)
+		self.skipButton.setEnabled(showButtons)
+		self.stopButton.setEnabled(showButtons)
+		self.saveButton.setEnabled(showButtons)
+		self.incButton.setEnabled(showButtons)
+		self.decButton.setEnabled(showButtons)
+		self.markerButton.setEnabled(showButtons)
+		self.deleteButton.setEnabled(showButtons)
+		self.slider.setEnabled(showButtons)
+
 		if not self.isPaused:
 			self.playButton.hide()
 			self.pauseButton.show()
-
-			self.backButton.setEnabled(True)
-			self.nextButton.setEnabled(True)
-			self.skipButton.setEnabled(True)
-			self.stopButton.setEnabled(True)
-			self.saveButton.setEnabled(True)
-			self.incButton.setEnabled(True)
-			self.decButton.setEnabled(True)
-			self.markerButton.setEnabled(True)
-			self.slider.setEnabled(True)
 		else:
 			self.playButton.show()
 			self.pauseButton.hide()
-			self.backButton.setEnabled(False)
-			self.nextButton.setEnabled(False)
-			self.skipButton.setEnabled(False)
-			self.stopButton.setEnabled(False)
-			self.saveButton.setEnabled(False)
-			self.incButton.setEnabled(False)
-			self.decButton.setEnabled(False)
-			self.markerButton.setEnabled(False)
-			self.slider.setEnabled(False)
 
 		if self.mediaplayer.is_playing():
 			self.updateCounter()
@@ -527,13 +522,19 @@ class Window (QtWidgets.QMainWindow):
 			timex = 1000
 		return timex
 	
+	def delete(self, event):
+		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete this item?',
+                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+		# Get the user's choice and act accordingly
+		if choice == QMessageBox.Yes:
+			self.confirmResetMetrics()
+	
 	def confirmResetMetrics(self):
 		if self.media != None:
 			if self.hasData():
 				self.saveAs(None)
 			if self.excelFilename is not None:
 				self.resetMetrics()
-
 
 	def resetMetrics(self):
 		if self.media != None:
@@ -571,7 +572,6 @@ class Window (QtWidgets.QMainWindow):
 	def stopClicked(self, event):
 		if self.mediaplayer != None:
 			self.mediaplayer.stop()
-			self.confirmResetMetrics()
 
 	def loadVideo(self):
 		#self.stopClicked(None)
