@@ -122,13 +122,13 @@ class Window (QtWidgets.QMainWindow):
 
 		self.shortcuts = []
 
-		fontColor = "#3e3e3e"
+		self.fontColor = "#3e3e3e"
 
-		buttons = [
+		self.buttons = [
 			{"name": "playButton", "icon": "fa5s.play",
 			    "enabled": False, "clicked": self.changePlayButton, "hotkey": ["Space"]},
 			{"name": "pauseButton", "icon": "fa5s.pause",
-			    "hide": True, "clicked": self.changePlayButton},
+			     "hide": True, "clicked": self.changePlayButton},
 			{"name": "backButton", "icon": "fa5s.backward",
 			    "enabled": False, "pressed": self.backButtonClicked, "hotkey": ["left"], "setAutoRepeat": True},
 			{"name": "stopButton", "icon": "fa5s.stop",
@@ -154,7 +154,10 @@ class Window (QtWidgets.QMainWindow):
 			    "enabled": False, "clicked": self.delete, "color": "#dc3545"},
 		]
 
-		for button in buttons:
+		for button in self.buttons:
+			button.setdefault("color", self.fontColor)
+
+		for button in self.buttons:
 			if "type" not in button or button["type"] == "button":
 				btn = QPushButton('')
 				setattr(self, button["name"], btn)
@@ -169,7 +172,7 @@ class Window (QtWidgets.QMainWindow):
 				if "color" in button:
 					btn.setIcon(qtawesome.icon(button["icon"], color=button["color"]))
 				else:
-					btn.setIcon(qtawesome.icon(button["icon"], color=fontColor))
+					btn.setIcon(qtawesome.icon(button["icon"], color=self.fontColor))
 			elif "type" not in button or button["type"] == "button":
 				# set width and height to take the same space as the icon plus the padding
 				btn.setFixedSize(90, 90)
@@ -217,7 +220,7 @@ class Window (QtWidgets.QMainWindow):
 				if "color" in button:
 					btn.setStyleSheet("color: " + button["color"])
 				else:
-					btn.setStyleSheet("color: " + fontColor)
+					btn.setStyleSheet("color: " + self.fontColor)
 
 		self.vboxlayout = QtWidgets.QVBoxLayout()
 		self.vboxlayout.setContentsMargins(0, 0, 0, 0)
@@ -259,7 +262,7 @@ class Window (QtWidgets.QMainWindow):
 			self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 25))
 		else:
 			self.hotkeyLabel.setFont(QFont(QFont().defaultFamily(), 12))
-		self.hotkeyLabel.setStyleSheet("color: " + fontColor)
+		self.hotkeyLabel.setStyleSheet("color: " + self.fontColor)
 		self.vboxlayout.addWidget(self.hotkeyLabel)
 
 		self.createMenu()
@@ -290,12 +293,7 @@ class Window (QtWidgets.QMainWindow):
 			self.mediaplayer.set_hwnd(self.videoframe.winId())
 		elif sys.platform == "darwin":  # for MacOS
 			self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
-
-		#event_manager = self.mediaplayer.event_manager()
-		#event_manager.event_attach (EventType.MediaPlayerEndReached, self.vlcEndReached)
-
-	#def vlcEndReached(self, event):
-
+		
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
@@ -317,9 +315,9 @@ class Window (QtWidgets.QMainWindow):
 	def pause(self):
 		self.isPaused = True
 		if self.mediaplayer != None:
-			self.mediaplayer.pause()
-			self.pauseButton.hide()
-			self.playButton.show()
+			if (self.mediaplayer.get_state() == vlc.State.Playing):
+				self.mediaplayer.pause()
+			
 
 	def backButtonClicked(self):
 		self.seekBySeconds(-1)
@@ -336,7 +334,7 @@ class Window (QtWidgets.QMainWindow):
 		
 	def seekBySeconds(self, skipTimeInSec):
 		if self.hasMedia():
-			videoLength = self.mediaplayer.get_length()
+			videoLength = self.media.get_duration()
 			videoTime = self.mediaplayer.get_time() 
 			if videoTime + (skipTimeInSec * 1000) > videoLength:
 				self.mediaplayer.set_time(videoLength)
@@ -377,30 +375,35 @@ class Window (QtWidgets.QMainWindow):
 
 	def updateUI(self):
 		hasMedia = self.hasMedia()
+
+		if hasMedia:
+			self.isPaused = self.mediaplayer.get_state() in {vlc.State.Paused, vlc.State.NothingSpecial}
+
 		showButtons = not self.isPaused
 		self.backButton.setEnabled(hasMedia)
 		self.nextButton.setEnabled(hasMedia)
 		self.skipButton.setEnabled(hasMedia)
 		self.stopButton.setEnabled(hasMedia)
-		self.saveButton.setEnabled(showButtons)
+		self.saveButton.setEnabled(hasMedia)
 		self.incButton.setEnabled(showButtons)
 		self.decButton.setEnabled(showButtons)
 		self.markerButton.setEnabled(showButtons)
-		self.deleteButton.setEnabled(showButtons)
+		self.deleteButton.setEnabled(hasMedia)
 		self.slider.setEnabled(hasMedia)
 
-		if not self.isPaused:
-			self.playButton.hide()
-			self.pauseButton.show()
+		# show the correct icon on the play/pause Button
+		if showButtons:
+			button_names = ["pauseButton"]
 		else:
-			self.playButton.show()
-			self.pauseButton.hide()
-
+			button_names = ["playButton"]
+		buttonItem = [button for button in self.buttons if button["name"] in button_names][0]
+		self.playButton.setIcon(qtawesome.icon(buttonItem["icon"], color=buttonItem["color"]))
+	
 		if hasMedia:
 				playerTime = self.mediaplayer.get_time()
 				sec = int(playerTime/1000)
 				self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
-				videoLength = self.mediaplayer.get_length()
+				videoLength = self.media.get_duration()
 				if videoLength > 0:
 					scaled_player_time = int((playerTime / videoLength) * 10000)
 					self.sliderSilentValue(scaled_player_time)
@@ -567,6 +570,7 @@ class Window (QtWidgets.QMainWindow):
 		return timex
 	
 	def delete(self, event):
+		self.pause()
 		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data? If yes, we will first save the data.',
                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 		# Get the user's choice and act accordingly
@@ -575,7 +579,7 @@ class Window (QtWidgets.QMainWindow):
 			self.confirmResetMetrics()
 
 	def hasMedia(self):
-		return self.media != None and self.mediaplayer != None and self.mediaplayer.get_length() > 0
+		return self.media != None and self.mediaplayer != None and self.media.get_duration() > 0
 	
 	def confirmResetMetrics(self):
 		if self.hasMedia():
@@ -637,7 +641,6 @@ class Window (QtWidgets.QMainWindow):
 			self.media = self.vlc_instance.media_new(str(path))
 			self.mediaplayer.set_media(self.media)	
 			self.media.parse()
-
 			self.playButton.setEnabled(True)
 			self.resetMetrics()
 
