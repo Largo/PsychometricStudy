@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import os, sys, ctypes
+import os, sys, ctypes, signal
 from pathlib import Path
 from os import path
 
@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import QApplication, QHBoxLayout, QPushButton, QLabel, QMes
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QKeySequence
-import playsound
+from playsound import playsound
 
 try:
 	# Load VLC
@@ -50,11 +50,10 @@ except:
 	sys.exit(msgBox.exec_())
 import time, datetime
 from time import gmtime, strftime
-import playaudio
-
 app_name = "Psychometric Study"
 
 class ClickableSlider(QtWidgets.QSlider):
+
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             # Determine the position of the click within the slider
@@ -62,6 +61,8 @@ class ClickableSlider(QtWidgets.QSlider):
             # Set the slider position to the clicked value
             self.setValue(int(click_value))
         super().mousePressEvent(event)
+	
+
 
 class Window (QtWidgets.QMainWindow):
 	points = 0
@@ -235,7 +236,10 @@ class Window (QtWidgets.QMainWindow):
 		self.slider.setMinimum(0)
 		self.slider.setMaximum(10000)
 		self.slider.setEnabled(False)
+		self.sliderNewValue = -1 # This is used to note if the slider was moved to avoid calling vlc too often when scrubbing
+		self.sliderLastChange = datetime.datetime.now()
 		self.slider.valueChanged.connect(self.sliderChanged)
+		
 
 		self.totalTime = QtWidgets.QLabel("0:00:00")
 		self.totalTime.setMinimumWidth(105)
@@ -296,7 +300,7 @@ class Window (QtWidgets.QMainWindow):
 	def beforeClick(self, func):
 		# make an event handler
 		def eventHandler(event=None):
-			playsound.playsound(bundle_dir + os.sep + "決定ボタンを押す7.mp3", block=False)
+			playsound(bundle_dir + os.sep + "決定ボタンを押す7.mp3", block=False)
 			# dynamically call func
 			func(event)
 			
@@ -306,10 +310,13 @@ class Window (QtWidgets.QMainWindow):
 		self.counterLabel.setText(str(self.points))
 
 	def sliderChanged(self, val):
+		self.sliderNewValue = val
+
+	def changeVideoPositionFromSlider(self, val):
 		newPosition = val/10000.0
 		if newPosition >= 1.0:
 			newPosition = 0.99999
-		self.mediaplayer.set_position(newPosition)
+		self.mediaplayer.set_position(float(newPosition))
 
 	def sliderSilentValue(self, val):
 		self.slider.blockSignals(True)
@@ -400,15 +407,21 @@ class Window (QtWidgets.QMainWindow):
 			button_names = ["playButton"]
 		buttonItem = [button for button in self.buttons if button["name"] in button_names][0]
 		self.playButton.setIcon(qtawesome.icon(buttonItem["icon"], color=buttonItem["color"]))
-	
+
 		if hasMedia:
 				playerTime = self.mediaplayer.get_time()
 				sec = int(playerTime/1000)
 				self.timeElapsed.setText(str(datetime.timedelta(seconds=sec)))
 				videoLength = self.media.get_duration()
 				if videoLength > 0:
-					scaled_player_time = int((playerTime / videoLength) * 10000)
-					self.sliderSilentValue(scaled_player_time)
+					# handle the slider being moved or move the slider
+					if self.sliderNewValue != -1 and (datetime.datetime.now() - self.sliderLastChange >= datetime.timedelta(seconds=0.5)):
+						self.changeVideoPositionFromSlider(self.sliderNewValue)
+						self.sliderNewValue = -1
+						self.sliderLastChange = datetime.datetime.now()
+					elif self.sliderNewValue == -1:
+						scaled_player_time = int((playerTime / videoLength) * 10000)
+						self.sliderSilentValue(scaled_player_time)
 
 		if hasMedia and self.mediaplayer.is_playing():
 			self.updateCounter()		
@@ -852,6 +865,12 @@ class Window (QtWidgets.QMainWindow):
 def crash_handler(exctype, value, traceback):
     # Handle the exception
 	print("An error occurred:", value)
+
+# handle ctrl+c
+def signal_handler(signal, frame):
+  sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 if __name__=='__main__':
 	sys.excepthook = crash_handler

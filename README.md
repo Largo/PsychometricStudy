@@ -22,20 +22,13 @@ pipenv install
 The following packages are needed. This might administrative permissions.
 
 ```
-pip install xlsxwriter
-pip install python-vlc
-pip install PyQt5
-pip install qtawesome
-pip install pyinstaller
-pip install pillow
-pip install pyaudio
-pip install numpy
+python3 -m pip install xlsxwriter python-vlc PyQt5 qtawesome pyinstaller pillow playsound
 ```
 
 
 ### Run from source
 ```
-python app.py
+python3 app.py
 ```
 
 # How to create an executable file:
