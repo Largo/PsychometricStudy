@@ -9,6 +9,8 @@ python-vlc = "*"
 PyQt5 = "*"
 QtAwesome = "*"
 Pillow = "*"
+pyaudio = "*"
+numpy = "*"
 
 [dev-packages]
 pyinstaller = "*"

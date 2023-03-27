@@ -28,6 +28,8 @@ pip install PyQt5
 pip install qtawesome
 pip install pyinstaller
 pip install pillow
+pip install pyaudio
+pip install numpy
 ```
 
 

@@ -26,6 +26,8 @@ from PyQt5.QtWidgets import QApplication, QHBoxLayout, QPushButton, QLabel, QMes
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QKeySequence
+import playsound
+
 try:
 	# Load VLC
 	if sys.platform == "darwin" or sys.platform == "linux":
@@ -48,6 +50,7 @@ except:
 	sys.exit(msgBox.exec_())
 import time, datetime
 from time import gmtime, strftime
+import playaudio
 
 app_name = "Psychometric Study"
 
@@ -128,7 +131,7 @@ class Window (QtWidgets.QMainWindow):
 			     "hide": True, "clicked": self.changePlayButton},
 			{"name": "backButton", "icon": "fa5s.backward",
 			    "enabled": False, "pressed": self.backButtonClicked, "hotkey": ["left"], "setAutoRepeat": True},
-			{"name": "stopButton", "icon": "fa5s.stop",
+			{"name": "stopButton", "icon": "fa5s.stop",  "hide": True,
 			    "enabled": False, "clicked": self.stopButtonClicked},
 			{"name": "nextButton", "icon": "fa5s.forward",
 			    "enabled": False, "pressed": self.nextButtonClicked, "hotkey": ["right"], "setAutoRepeat": True},
@@ -146,7 +149,7 @@ class Window (QtWidgets.QMainWindow):
 			{"name": "markerButton", "icon": "fa5s.surprise",
 			    "enabled": False, "clicked": self.addMarker, "hotkey": ["Enter", "Return"], "color": "#F5BD0A"},
 			{"name": "saveButton", "icon": "fa5s.save",
-			    "enabled": False, "clicked": self.save},
+			    "enabled": False, "clicked": self.saveButton},
 			{"name": "deleteButton", "icon": "fa5s.trash",
 			    "enabled": False, "clicked": self.delete, "color": "#dc3545"},
 		]
@@ -185,9 +188,9 @@ class Window (QtWidgets.QMainWindow):
 			if "hide" in button:
 				btn.hide()
 			if "clicked" in button:
-				btn.clicked.connect(button["clicked"])
+				btn.clicked.connect(self.beforeClick(button["clicked"]))
 			if "pressed" in button:
-				btn.pressed.connect(button["pressed"])
+				btn.pressed.connect(self.beforeClick(button["pressed"]))
 			if "released" in button:
 				btn.released.connect(button["released"])
 			if "setAutoRepeat" in button:
@@ -263,13 +266,13 @@ class Window (QtWidgets.QMainWindow):
 		self.vboxlayout.addWidget(self.hotkeyLabel)
 
 		self.createMenu()
+		self.setUpVLC()
 
 		self.prevSecond = 0
 		if "defaultVideoPath" in self.defaultConfig:
 			self.loadVideoFromPath(self.defaultConfig["defaultVideoPath"])
 
 		self.isPaused = True
-		self.setUpVLC()
 
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(200)
@@ -289,7 +292,15 @@ class Window (QtWidgets.QMainWindow):
 			self.mediaplayer.set_hwnd(self.videoframe.winId())
 		elif sys.platform == "darwin":  # for MacOS
 			self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
-		
+
+	def beforeClick(self, func):
+		# make an event handler
+		def eventHandler(event=None):
+			playsound.playsound(bundle_dir + os.sep + "決定ボタンを押す7.mp3", block=False)
+			# dynamically call func
+			func(event)
+			
+		return eventHandler
 
 	def updateCounter(self):
 		self.counterLabel.setText(str(self.points))
@@ -308,20 +319,20 @@ class Window (QtWidgets.QMainWindow):
 	def pauseButtonClicked(self, event):
 		self.pause()
 	
-	def pause(self):
+	def pause(self, event = None):
 		self.isPaused = True
 		if self.mediaplayer != None:
 			if (self.mediaplayer.get_state() == vlc.State.Playing):
 				self.mediaplayer.pause()
 			
 
-	def backButtonClicked(self):
+	def backButtonClicked(self, event = None):
 		self.seekBySeconds(-1)
 
-	def nextButtonClicked(self):
+	def nextButtonClicked(self, event = None):
 		self.seekBySeconds(1)
 
-	def skipButtonClicked(self):
+	def skipButtonClicked(self, event = None):
 		self.seekBySeconds(self.skipTimeInSec)
 		
 	def seekBySeconds(self, skipTimeInSec):
@@ -338,14 +349,14 @@ class Window (QtWidgets.QMainWindow):
 	def releaseButton(self):
 		self.locked = False
 
-	def increase(self):
+	def increase(self, event = None):
 		tf = self.timeFactor()
 		if self.points < self.upper_slider_value:
 			self.points += 1
 			self.locked = True
 			self.eta = time.time()
 
-	def decrease(self):
+	def decrease(self, event = None):
 		tf = self.timeFactor()
 		if self.points > (self.lower_slider_value):
 			self.points -= 1
@@ -361,7 +372,7 @@ class Window (QtWidgets.QMainWindow):
 			self.prevSecond = 0
 			self.mediaplayer.set_position(0.0)
 
-	def stopButtonClicked(self):
+	def stopButtonClicked(self, event = None):
 		self.restartVideo()
 
 	def updateUI(self):
@@ -450,6 +461,12 @@ class Window (QtWidgets.QMainWindow):
 	def setTheFilename(self):
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
 		    None, 'Save File', '', 'Excel Files (*.xlsx);;All Files (*)')[0]
+		
+	def saveButton(self, event):
+		if self.excelFilename is None:
+			self.saveAs(event)
+		else:
+			self.save(event)
 
 	def saveAs(self, event):
 		self.setTheFilename()
@@ -578,12 +595,11 @@ class Window (QtWidgets.QMainWindow):
 	
 	def delete(self, event):
 		self.pause()
-		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data? If yes, we will first save unsaved data.',
-                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+		choice = QMessageBox.question(None, 'Delete Item', 'Are you sure you want to delete the data?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 		# Get the user's choice and act accordingly
 		if choice == QMessageBox.Yes:
 			self.pause()
-			self.confirmResetMetrics()
+			self.resetMetrics()
 
 	def hasMedia(self):
 		return self.media != None and self.mediaplayer != None and self.media.get_duration() > 0
@@ -757,7 +773,7 @@ class Window (QtWidgets.QMainWindow):
 		# update the label with the new range values
 		label.setText(f"Range: {lower_value} to {upper_value}")
 
-	def addMarker(self):
+	def addMarker(self, event = None):
 		if self.mediaplayer != None:
 			tf = self.timeFactor()
 			self.markers_list.append([int(self.mediaplayer.get_time()/tf), 1])
