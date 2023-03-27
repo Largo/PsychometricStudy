@@ -300,9 +300,12 @@ class Window (QtWidgets.QMainWindow):
 	def beforeClick(self, func):
 		# make an event handler
 		def eventHandler(event=None):
-			playsound(bundle_dir + os.sep + "決定ボタンを押す7.mp3", block=False)
-			# dynamically call func
-			func(event)
+			try:
+				playsound(bundle_dir + os.sep + "buttonSound.mp3", block=False)
+				self.lastButtonSoundPlayed = datetime.datetime.now()
+			finally:
+				# dynamically call func
+				func(event)
 			
 		return eventHandler
 
@@ -474,6 +477,8 @@ class Window (QtWidgets.QMainWindow):
 	def setTheFilename(self):
 		self.excelFilename = QtWidgets.QFileDialog.getSaveFileName(
 		    None, 'Save File', '', 'Excel Files (*.xlsx);;All Files (*)')[0]
+		if self.excelFilename == '':
+			self.excelFilename = None
 		
 	def saveButton(self, event):
 		if self.excelFilename is None:

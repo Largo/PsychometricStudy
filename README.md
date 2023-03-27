@@ -42,13 +42,13 @@ python -m PyInstaller app.py --name PsychometricStudy --onefile --clean --icon i
 Including VLC in the binary. Will work on computers without VLC installed, if you are comfortable with redistributing VLC.
 
 ```
-python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks --icon icon.ico --add-data="icon.ico;." --clean
+python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --additional-hooks-dir hooks --icon icon.ico --add-data="icon.ico;." --add-binary="buttonSound.mp3;." --clean
 ```
 
 OSX:
 
 ```
-python3 -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy --noconfirm
+python3 -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png  --add-binary="buttonSound.mp3:." --clean --osx-bundle-identifier=com.idogawa.psychometricstudy --noconfirm
 
 brew install create-dmg
 mkdir -p dist/dmg
