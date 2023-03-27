@@ -1,0 +1,1 @@
+python3 -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy --noconfirm

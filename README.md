@@ -53,7 +53,7 @@ python -m PyInstaller --noconsole  app.py --name PsychometricStudy --onefile --a
 OSX:
 
 ```
-python -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy
+python3 -m PyInstaller  --noconsole app.py --name PsychometricStudy --additional-hooks-dir hooks/ --icon icon.png --clean --osx-bundle-identifier=com.idogawa.psychometricstudy --noconfirm
 
 brew install create-dmg
 mkdir -p dist/dmg
